@@ -71,7 +71,7 @@ jobs:
         PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
       run: |
         # Install packagecloud CLI
-        gem install package_cloud
+        sudo gem install package_cloud
 
         # Deploy to packagecloud.io
         # Format: package_cloud push [repo] [package_file]
