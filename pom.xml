@@ -7,7 +7,7 @@
 
     <groupId>org.flossware</groupId>
     <artifactId>civilization-simulator-java</artifactId>
-    <version>1.1</version>
+    <version>1.2</version>
     <name>FlossWare Civilization Simulator</name>
     <description>Alternate History Civilization Simulator - A reproducible pseudo-random civilization simulator supporting alternate history scenarios from natural language to structured simulation</description>
     <url>https://github.com/FlossWare/civilization-simulator-java</url>
