@@ -1,10 +1,12 @@
 # Alternate History Civilization Simulator
 
-**Version:** 1.0  
+**Version:** 1.1  
 **License:** GPL-3.0  
 **Status:** Production-Ready
 
 A high-performance, reproducible pseudo-random civilization simulator for exploring alternate history scenarios. Simulates the evolution of civilizations across millennia with technology diffusion, economy, politics, military, climate, religion, and more.
+
+**Platforms:** Desktop (JAR), Web UI, Android, iOS
 
 ## Features
 
@@ -365,6 +367,16 @@ This project uses **X.Y versioning**:
 Releases are available via:
 - **GitHub Releases**: https://github.com/FlossWare/civilization-simulator-java/releases
 - **PackageCloud.io**: https://packagecloud.io/FlossWare/civilization-simulator
+
+## Mobile Apps
+
+Native Android and iOS apps are available! See [MOBILE_APPS.md](MOBILE_APPS.md) for:
+- Download links (APK/IPA)
+- Installation instructions
+- Performance benchmarks
+- Kotlin Multiplatform Mobile architecture
+
+**Source code**: `mobile/` directory in this repository
 
 ## Contributing
 

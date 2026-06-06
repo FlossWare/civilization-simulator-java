@@ -5,15 +5,15 @@ The Civilization Simulator is now available as native mobile applications!
 ## 📱 Download
 
 ### Android
-- **Repository**: https://github.com/FlossWare/civilization-simulator-kmm
-- **Latest Release**: https://github.com/FlossWare/civilization-simulator-kmm/releases/latest
-- **Direct APK**: [Download APK](https://github.com/FlossWare/civilization-simulator-kmm/releases/latest/download/androidApp-release.apk)
+- **Repository**: https://github.com/FlossWare/civilization-simulator-java
+- **Latest Release**: https://github.com/FlossWare/civilization-simulator-java/releases/latest
+- **Direct APK**: [Download APK](https://github.com/FlossWare/civilization-simulator-java/releases/latest/download/androidApp-release.apk)
 
 **Requirements**: Android 8.0 (API 26) or higher
 
 ### iOS
-- **Repository**: https://github.com/FlossWare/civilization-simulator-kmm
-- **Latest Release**: https://github.com/FlossWare/civilization-simulator-kmm/releases/latest
+- **Repository**: https://github.com/FlossWare/civilization-simulator-java
+- **Latest Release**: https://github.com/FlossWare/civilization-simulator-java/releases/latest
 - **IPA (Sideload)**: Available in releases
 
 **Requirements**: iOS 14.0 or higher
@@ -57,8 +57,8 @@ adb install androidApp-release.apk
 4. AltStore will sideload the app
 
 **Method 2: Xcode (Developers)**
-1. Clone the KMM repository
-2. Open `iosApp/iosApp.xcodeproj` in Xcode
+1. Clone this repository
+2. Open `mobile/iosApp/iosApp.xcodeproj` in Xcode
 3. Select your device
 4. Build and run
 
@@ -143,7 +143,6 @@ The mobile apps are built automatically via GitHub Actions:
 
 **Create a release**:
 ```bash
-cd civilization-simulator-kmm
 git tag v1.0.0
 git push origin v1.0.0
 ```
@@ -168,8 +167,8 @@ GitHub Actions automatically builds and publishes the release!
 
 ## 📖 Documentation
 
-- **Mobile README**: https://github.com/FlossWare/civilization-simulator-kmm/blob/main/README.md
-- **Main Project**: https://github.com/FlossWare/civilization-simulator-java
+- **Mobile README**: [mobile/README.md](mobile/README.md)
+- **Main README**: [README.md](README.md)
 - **Deployment Guide**: [DEPLOYMENT_GUIDE.md](DEPLOYMENT_GUIDE.md)
 
 ---
@@ -180,7 +179,7 @@ Want to improve the mobile apps?
 
 1. Fork the repository
 2. Create a feature branch
-3. Make your changes
+3. Make your changes (mobile code is in `mobile/` directory)
 4. Test on both platforms
 5. Submit a pull request
 
@@ -196,10 +195,8 @@ GPL-3.0 - Same as the main project
 
 ## 🔗 Links
 
-- **Main Repository**: https://github.com/FlossWare/civilization-simulator-java
-- **Mobile Repository**: https://github.com/FlossWare/civilization-simulator-kmm
-- **Desktop Releases**: https://github.com/FlossWare/civilization-simulator-java/releases
-- **Mobile Releases**: https://github.com/FlossWare/civilization-simulator-kmm/releases
+- **Repository**: https://github.com/FlossWare/civilization-simulator-java
+- **Releases**: https://github.com/FlossWare/civilization-simulator-java/releases
 
 ---
 
