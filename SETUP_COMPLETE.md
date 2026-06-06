@@ -19,7 +19,7 @@
 
 ### 3. ✅ Missing Project Files Added
 
-- **LICENSE**: MIT License
+- **LICENSE**: GPL-3.0 License
 - **CONTRIBUTING.md**: Contribution guidelines with pure functional design principles
 - **.gitignore**: Comprehensive ignore patterns for Java/Maven projects
 
@@ -217,4 +217,4 @@ java -jar target/civilization-simulator-java-1.0.jar single
 
 **Project**: FlossWare Civilization Simulator v1.0  
 **Setup Date**: 2026-06-06  
-**License**: MIT
+**License**: GPL-3.0

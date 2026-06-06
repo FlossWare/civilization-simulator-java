@@ -1,7 +1,7 @@
 # Alternate History Civilization Simulator
 
 **Version:** 1.0  
-**License:** MIT  
+**License:** GPL-3.0  
 **Status:** Production-Ready
 
 A high-performance, reproducible pseudo-random civilization simulator for exploring alternate history scenarios. Simulates the evolution of civilizations across millennia with technology diffusion, economy, politics, military, climate, religion, and more.
@@ -372,7 +372,7 @@ See [CONTRIBUTING.md](CONTRIBUTING.md)
 
 ## License
 
-MIT License - see [LICENSE](LICENSE)
+GPL-3.0 License - see [LICENSE](LICENSE)
 
 ## Citation
 
