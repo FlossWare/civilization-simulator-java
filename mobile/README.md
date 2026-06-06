@@ -9,7 +9,7 @@ This project contains native Android and iOS applications built with Kotlin Mult
 ### Project Structure
 
 ```
-civilization-simulator-kmm/
+civilization-simulator-java/mobile/
 ├── shared/              # Shared Kotlin code (simulation engine)
 │   ├── commonMain/      # Platform-agnostic code
 │   ├── androidMain/     # Android-specific code
@@ -34,7 +34,7 @@ civilization-simulator-kmm/
 **Option 1: Download from GitHub Releases**
 ```bash
 # Download latest APK
-wget https://github.com/FlossWare/civilization-simulator-kmm/releases/latest/download/androidApp-release.apk
+wget https://github.com/FlossWare/civilization-simulator-java/releases/latest/download/androidApp-release.apk
 
 # Install on device
 adb install androidApp-release.apk
@@ -58,7 +58,7 @@ adb install androidApp/build/outputs/apk/release/androidApp-release.apk
 **Option 1: AltStore (Recommended for sideloading)**
 ```bash
 # Download IPA from releases
-wget https://github.com/FlossWare/civilization-simulator-kmm/releases/latest/download/iosApp.ipa
+wget https://github.com/FlossWare/civilization-simulator-java/releases/latest/download/iosApp.ipa
 
 # Install via AltStore
 # 1. Install AltStore on your iOS device
@@ -199,8 +199,8 @@ GPL-3.0 - See LICENSE file for details
 ## Links
 
 - **Main Project**: https://github.com/FlossWare/civilization-simulator-java
-- **Releases**: https://github.com/FlossWare/civilization-simulator-kmm/releases
-- **Issues**: https://github.com/FlossWare/civilization-simulator-kmm/issues
+- **Releases**: https://github.com/FlossWare/civilization-simulator-java/releases
+- **Issues**: https://github.com/FlossWare/civilization-simulator-java/issues
 - **Desktop Version**: https://github.com/FlossWare/civilization-simulator-java/releases
 
 ## Support
