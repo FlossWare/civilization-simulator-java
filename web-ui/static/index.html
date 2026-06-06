@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Civilization Simulator - Web UI</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🏛️ Alternate History Civilization Simulator</h1>
+            <p class="subtitle">Explore what-if scenarios across millennia</p>
+            <p class="version">v1.0 | Lightweight Web UI</p>
+        </header>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <h2>🎮 Run Simulation</h2>
+                <p>Execute a single simulation with the default "Rome Survives" scenario</p>
+                <p class="stats">⚡ 70-100 years/ms | 📅 2,053 years simulated</p>
+                <a href="simulator.html" class="btn btn-primary">Launch Simulator</a>
+            </div>
+
+            <div class="feature-card">
+                <h2>📊 Monte Carlo Analysis</h2>
+                <p>Run multiple simulations to explore probability distributions</p>
+                <p class="stats">🎲 50 runs | 📈 Statistical analysis</p>
+                <a href="monte-carlo.html" class="btn btn-primary">Start Analysis</a>
+            </div>
+
+            <div class="feature-card">
+                <h2>📖 Documentation</h2>
+                <p>Learn about the simulation engine and how to use the API</p>
+                <p class="stats">📚 Pure functional design | 🔄 Reproducible</p>
+                <a href="https://github.com/FlossWare/civilization-simulator-java" class="btn btn-secondary" target="_blank">View Docs</a>
+            </div>
+        </div>
+
+        <div class="info-section">
+            <h3>✨ Key Features</h3>
+            <div class="features-list">
+                <div class="feature-item">
+                    <strong>🔁 Reproducible</strong>
+                    <span>Same seed → identical results across all runs</span>
+                </div>
+                <div class="feature-item">
+                    <strong>⚡ High Performance</strong>
+                    <span>70-100 years per millisecond simulation speed</span>
+                </div>
+                <div class="feature-item">
+                    <strong>🌍 Multi-Dimensional</strong>
+                    <span>Population, Economy, Tech, Politics, Military, Climate, Religion</span>
+                </div>
+                <div class="feature-item">
+                    <strong>🔬 Tech Tree DAG</strong>
+                    <span>Explicit dependencies with automatic cycle detection</span>
+                </div>
+                <div class="feature-item">
+                    <strong>📦 No Backend Required</strong>
+                    <span>Runs entirely in your browser (demo mode)</span>
+                </div>
+                <div class="feature-item">
+                    <strong>📊 Monte Carlo</strong>
+                    <span>Parallel execution with statistical analysis</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="scenario-preview">
+            <h3>🏺 Default Scenario: Rome Survives</h3>
+            <p><em>"What if the Western Roman Empire endured through history to 2026?"</em></p>
+            <div class="scenario-details">
+                <div class="detail-item">
+                    <strong>Start Year:</strong> -27 BCE (Augustus becomes Emperor)
+                </div>
+                <div class="detail-item">
+                    <strong>End Year:</strong> 2026 CE
+                </div>
+                <div class="detail-item">
+                    <strong>Initial Population:</strong> 5 million
+                </div>
+                <div class="detail-item">
+                    <strong>Technologies:</strong> 20+ tech tree from Classical to Modern
+                </div>
+            </div>
+        </div>
+
+        <footer>
+            <p>FlossWare Civilization Simulator |
+               <a href="https://github.com/FlossWare/civilization-simulator-java">GitHub</a> |
+               <a href="https://packagecloud.io/flossware/java">Download</a>
+            </p>
+            <p class="license">Licensed under GPL-3.0</p>
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+</body>
+</html>
