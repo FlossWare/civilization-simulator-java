@@ -61,7 +61,7 @@ jobs:
     
     - name: Create export options
       run: |
-        cd mobile/iosApp
+        cd ${{ env.MOBILE_DIR }}/iosApp
         cat > ExportOptions.plist << PLIST
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -79,7 +79,7 @@ jobs:
       id: export_ipa
       continue-on-error: true
       run: |
-        cd mobile/iosApp
+        cd ${{ env.MOBILE_DIR }}/iosApp
         xcodebuild -exportArchive \
           -archivePath build/iosApp.xcarchive \
           -exportPath build \
@@ -88,7 +88,7 @@ jobs:
     - name: Handle export failure
       if: steps.export_ipa.outcome == 'failure'
       run: |
-        cd mobile/iosApp
+        cd ${{ env.MOBILE_DIR }}/iosApp
         echo "IPA export failed"
 
         # Check if archive exists (indicates build succeeded, export failed)
@@ -103,7 +103,7 @@ jobs:
     - name: Verify export success
       if: steps.export_ipa.outcome == 'success'
       run: |
-        cd mobile/iosApp
+        cd ${{ env.MOBILE_DIR }}/iosApp
         if [ ! -f build/iosApp.ipa ]; then
           echo "::error::Export reported success but IPA file missing"
           exit 1

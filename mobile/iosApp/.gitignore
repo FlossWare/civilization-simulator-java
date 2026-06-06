@@ -1,0 +1,20 @@
+# Xcode build artifacts
+build/
+*.xcarchive
+DerivedData/
+*.ipa
+
+# Pods
+Pods/
+Podfile.lock
+
+# User-specific
+*.xcworkspace/xcuserdata/
+*.xcworkspace/xcshareddata/
+
+# CocoaPods
+*.podspec
+Pods/
+
+# OS
+.DS_Store
