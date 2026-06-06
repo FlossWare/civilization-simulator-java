@@ -3,11 +3,22 @@ name: Build iOS IPA
 on:
   push:
     branches: [ main ]
+    paths:
+      # NOTE: Update this path if MOBILE_DIR changes
+      - 'mobile/**'
+      - '.github/workflows/build-ios.yml'
     tags:
       - 'v*'
   pull_request:
     branches: [ main ]
+    paths:
+      # NOTE: Update this path if MOBILE_DIR changes
+      - 'mobile/**'
+      - '.github/workflows/build-ios.yml'
   workflow_dispatch:
+
+env:
+  MOBILE_DIR: mobile
 
 jobs:
   build:
@@ -30,15 +41,15 @@ jobs:
         xcode-version: '15.2'
     
     - name: Grant execute permission for gradlew
-      run: chmod +x mobile/gradlew
+      run: chmod +x ${{ env.MOBILE_DIR }}/gradlew
 
     - name: Build shared framework
       run: ./gradlew :shared:linkReleaseFrameworkIosArm64 --no-daemon
-      working-directory: mobile
+      working-directory: ${{ env.MOBILE_DIR }}
 
     - name: Build iOS app with Xcode
       run: |
-        cd mobile/iosApp
+        cd ${{ env.MOBILE_DIR }}/iosApp
         xcodebuild clean archive \
           -scheme iosApp \
           -configuration Release \
@@ -48,10 +59,9 @@ jobs:
           CODE_SIGNING_REQUIRED=NO \
           CODE_SIGNING_ALLOWED=NO
     
-    - name: Export IPA
+    - name: Create export options
       run: |
-        cd mobile/iosApp
-        # Create export options
+        cd ${{ env.MOBILE_DIR }}/iosApp
         cat > ExportOptions.plist << PLIST
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -64,18 +74,41 @@ jobs:
         </dict>
         </plist>
         PLIST
-        
-        # Export archive to IPA (unsigned for development)
+
+    - name: Export IPA
+      id: export_ipa
+      continue-on-error: true
+      run: |
+        cd ${{ env.MOBILE_DIR }}/iosApp
         xcodebuild -exportArchive \
           -archivePath build/iosApp.xcarchive \
           -exportPath build \
-          -exportOptionsPlist ExportOptions.plist || true
-        
-        # If export fails, create a placeholder
-        if [ ! -f build/iosApp.ipa ]; then
-          echo "Note: IPA export requires code signing. Creating info file instead."
+          -exportOptionsPlist ExportOptions.plist
+
+    - name: Handle export failure
+      if: steps.export_ipa.outcome == 'failure'
+      run: |
+        cd ${{ env.MOBILE_DIR }}/iosApp
+        echo "⚠️ IPA export failed"
+
+        # Check if archive exists (indicates build succeeded, export failed)
+        if [ -f build/iosApp.xcarchive/Info.plist ]; then
+          echo "::warning::IPA export failed - likely due to code signing requirements"
           echo "iOS build completed. Signing required for distribution." > build/BUILD_INFO.txt
+        else
+          echo "::error::Archive missing - build may have failed"
+          exit 1
         fi
+
+    - name: Verify export success
+      if: steps.export_ipa.outcome == 'success'
+      run: |
+        cd ${{ env.MOBILE_DIR }}/iosApp
+        if [ ! -f build/iosApp.ipa ]; then
+          echo "::error::Export reported success but IPA file missing"
+          exit 1
+        fi
+        echo "✓ IPA export successful"
     
     - name: Upload IPA artifact
       uses: actions/upload-artifact@v4

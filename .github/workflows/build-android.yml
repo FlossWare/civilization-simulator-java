@@ -3,11 +3,22 @@ name: Build Android APK
 on:
   push:
     branches: [ main ]
+    paths:
+      # NOTE: Update this path if MOBILE_DIR changes
+      - 'mobile/**'
+      - '.github/workflows/build-android.yml'
     tags:
       - 'v*'
   pull_request:
     branches: [ main ]
+    paths:
+      # NOTE: Update this path if MOBILE_DIR changes
+      - 'mobile/**'
+      - '.github/workflows/build-android.yml'
   workflow_dispatch:
+
+env:
+  MOBILE_DIR: mobile
 
 jobs:
   build:
@@ -25,12 +36,12 @@ jobs:
         cache: 'gradle'
     
     - name: Grant execute permission for gradlew
-      run: chmod +x mobile/gradlew
+      run: chmod +x ${{ env.MOBILE_DIR }}/gradlew
       working-directory: .
 
     - name: Build with Gradle
       run: ./gradlew :androidApp:assembleRelease --no-daemon
-      working-directory: mobile
+      working-directory: ${{ env.MOBILE_DIR }}
     
     - name: Sign APK (if release)
       if: startsWith(github.ref, 'refs/tags/')
@@ -42,14 +53,14 @@ jobs:
       uses: actions/upload-artifact@v4
       with:
         name: android-apk
-        path: mobile/androidApp/build/outputs/apk/release/*.apk
+        path: ${{ env.MOBILE_DIR }}/androidApp/build/outputs/apk/release/*.apk
         retention-days: 30
     
     - name: Create Release
       if: startsWith(github.ref, 'refs/tags/')
       uses: softprops/action-gh-release@v1
       with:
-        files: mobile/androidApp/build/outputs/apk/release/*.apk
+        files: ${{ env.MOBILE_DIR }}/androidApp/build/outputs/apk/release/*.apk
         body: |
           ## Android APK
           
