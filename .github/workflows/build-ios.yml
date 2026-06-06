@@ -61,7 +61,7 @@ jobs:
     
     - name: Create export options
       run: |
-        cd ${{ env.MOBILE_DIR }}/iosApp
+        cd mobile/iosApp
         cat > ExportOptions.plist << PLIST
         <?xml version="1.0" encoding="UTF-8"?>
         <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
@@ -79,7 +79,7 @@ jobs:
       id: export_ipa
       continue-on-error: true
       run: |
-        cd ${{ env.MOBILE_DIR }}/iosApp
+        cd mobile/iosApp
         xcodebuild -exportArchive \
           -archivePath build/iosApp.xcarchive \
           -exportPath build \
@@ -88,8 +88,8 @@ jobs:
     - name: Handle export failure
       if: steps.export_ipa.outcome == 'failure'
       run: |
-        cd ${{ env.MOBILE_DIR }}/iosApp
-        echo "⚠️ IPA export failed"
+        cd mobile/iosApp
+        echo "IPA export failed"
 
         # Check if archive exists (indicates build succeeded, export failed)
         if [ -f build/iosApp.xcarchive/Info.plist ]; then
@@ -103,20 +103,20 @@ jobs:
     - name: Verify export success
       if: steps.export_ipa.outcome == 'success'
       run: |
-        cd ${{ env.MOBILE_DIR }}/iosApp
+        cd mobile/iosApp
         if [ ! -f build/iosApp.ipa ]; then
           echo "::error::Export reported success but IPA file missing"
           exit 1
         fi
-        echo "✓ IPA export successful"
+        echo "IPA export successful"
     
     - name: Upload IPA artifact
       uses: actions/upload-artifact@v4
       with:
         name: ios-ipa
         path: |
-          mobile/iosApp/build/*.ipa
-          mobile/iosApp/build/BUILD_INFO.txt
+          ${{ env.MOBILE_DIR }}/iosApp/build/*.ipa
+          ${{ env.MOBILE_DIR }}/iosApp/build/BUILD_INFO.txt
         retention-days: 30
     
     - name: Create Release
@@ -124,8 +124,8 @@ jobs:
       uses: softprops/action-gh-release@v1
       with:
         files: |
-          mobile/iosApp/build/*.ipa
-          mobile/iosApp/build/BUILD_INFO.txt
+          ${{ env.MOBILE_DIR }}/iosApp/build/*.ipa
+          ${{ env.MOBILE_DIR }}/iosApp/build/BUILD_INFO.txt
         body: |
           ## iOS IPA
           
