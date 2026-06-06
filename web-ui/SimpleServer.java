@@ -1,6 +1,8 @@
 import com.sun.net.httpserver.*;
 import java.io.*;
 import java.net.InetSocketAddress;
+import java.net.URLDecoder;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.*;
 import java.util.*;
 
@@ -14,6 +16,8 @@ import java.util.*;
 public class SimpleServer {
     private static final int PORT = 8080;
     private static final String STATIC_DIR = "static";
+    private static final long MAX_FILE_SIZE = 100 * 1024 * 1024; // 100MB limit
+    private static final int BUFFER_SIZE = 8192; // 8KB streaming buffer
 
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
@@ -43,16 +47,46 @@ public class SimpleServer {
                 path = "/index.html";
             }
 
-            File file = new File(STATIC_DIR + path);
+            // Sanitize and validate the requested path to prevent path traversal attacks
+            File file = resolveSecurePath(path);
+            if (file == null) {
+                // Path traversal attempt detected
+                String response = "403 Forbidden";
+                exchange.sendResponseHeaders(403, response.length());
+                OutputStream os = exchange.getResponseBody();
+                os.write(response.getBytes());
+                os.close();
+                return;
+            }
+
             if (file.exists() && !file.isDirectory()) {
                 String contentType = getContentType(path);
-                byte[] bytes = Files.readAllBytes(file.toPath());
+                long fileSize = file.length();
 
-                exchange.getResponseHeaders().set("Content-Type", contentType);
-                exchange.sendResponseHeaders(200, bytes.length);
-                OutputStream os = exchange.getResponseBody();
-                os.write(bytes);
-                os.close();
+                // Enforce maximum file size limit to prevent OOM attacks
+                if (fileSize > MAX_FILE_SIZE) {
+                    String response = "413 Payload Too Large";
+                    exchange.sendResponseHeaders(413, response.length());
+                    OutputStream os = exchange.getResponseBody();
+                    os.write(response.getBytes());
+                    os.close();
+                    return;
+                }
+
+                try (InputStream in = Files.newInputStream(file.toPath());
+                     OutputStream out = exchange.getResponseBody()) {
+                    exchange.getResponseHeaders().set("Content-Type", contentType);
+                    exchange.sendResponseHeaders(200, fileSize);
+
+                    byte[] buffer = new byte[BUFFER_SIZE];
+                    int bytesRead;
+                    while ((bytesRead = in.read(buffer)) > 0) {
+                        out.write(buffer, 0, bytesRead);
+                    }
+                } catch (IOException e) {
+                    System.err.println("Error streaming file: " + e.getMessage());
+                    // Connection may already be closed, ignore further errors
+                }
             } else {
                 String response = "404 Not Found";
                 exchange.sendResponseHeaders(404, response.length());
@@ -60,6 +94,45 @@ public class SimpleServer {
                 os.write(response.getBytes());
                 os.close();
             }
+        }
+
+        /**
+         * Securely resolves a requested path to ensure it stays within STATIC_DIR.
+         * Prevents path traversal attacks using both URL decoding and canonical path validation.
+         *
+         * Defends against:
+         * - Literal path traversal: "/../etc/passwd"
+         * - URL-encoded traversal: "/..%2F..%2Fpom.xml" (%2F = /)
+         * - Alternative encodings: "/%2e%2e%2fpom.xml" (%2e = .)
+         * - Double encoding and other bypass techniques
+         *
+         * @param requestedPath The path requested by the client (may contain URL encoding)
+         * @return A File object pointing within STATIC_DIR, or null if path traversal is detected
+         * @throws IOException If an I/O error occurs
+         */
+        private File resolveSecurePath(String requestedPath) throws IOException {
+            // Get absolute, normalized path to the static directory
+            Path staticPath = Paths.get(STATIC_DIR).toAbsolutePath().normalize();
+
+            // Remove leading slash from requested path if present
+            String cleanPath = requestedPath.startsWith("/") ? requestedPath.substring(1) : requestedPath;
+
+            // CRITICAL: Decode URL-encoded sequences first (e.g., %2F becomes /)
+            // This prevents bypass attacks using encoded path traversal sequences
+            String decodedPath = URLDecoder.decode(cleanPath, StandardCharsets.UTF_8);
+
+            // Resolve the requested path relative to static directory and normalize
+            // This collapses .. and . components after URL decoding
+            Path requestedFilePath = staticPath.resolve(decodedPath).normalize();
+
+            // Verify that the resolved path is within or equal to STATIC_DIR
+            // Compare canonical paths to ensure no escape via symlinks or other tricks
+            if (!requestedFilePath.toAbsolutePath().startsWith(staticPath)) {
+                // Path traversal attempt: resolved path is outside STATIC_DIR
+                return null;
+            }
+
+            return requestedFilePath.toFile();
         }
 
         private String getContentType(String path) {
