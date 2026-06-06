@@ -185,6 +185,10 @@ mvn help:evaluate -Dexpression=project.version -q -DforceStdout
 
 ---
 
-**Status**: Configuration complete, awaiting PackageCloud token setup  
+**Status**: Configuration complete, PACKAGECLOUD_TOKEN available at org level  
 **Last Updated**: 2026-06-06  
 **Pattern Source**: FlossWare collections-java
+
+## Update: Token Available
+
+The `PACKAGECLOUD_TOKEN` is set at the FlossWare organization level with "all" repositories visibility, so this repository has access to it. The 422 error from PackageCloud likely indicates the repository needs to be created at https://packagecloud.io first.
