@@ -184,6 +184,7 @@
                         <git>git</git>
                     </providerImplementations>
                     <tag>${project.version}</tag>
+                    <message>Incrementing pom.xml version</message>
                 </configuration>
             </plugin>
 
