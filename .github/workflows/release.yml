@@ -1,0 +1,86 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - 'v*.*'
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Extract version from tag
+      id: get_version
+      run: |
+        # Tag format: v1.2 (X.Y versioning)
+        VERSION=${GITHUB_REF#refs/tags/v}
+        echo "VERSION=$VERSION" >> $GITHUB_OUTPUT
+        echo "TAG=${GITHUB_REF#refs/tags/}" >> $GITHUB_OUTPUT
+        echo "Releasing version: $VERSION"
+
+    - name: Set up JDK 21
+      uses: actions/setup-java@v4
+      with:
+        java-version: '21'
+        distribution: 'temurin'
+        cache: maven
+
+    - name: Update POM version
+      run: |
+        mvn versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }} -DgenerateBackupPoms=false
+
+    - name: Build and package
+      run: mvn -B clean package
+
+    - name: Run tests
+      run: mvn -B test
+
+    - name: Generate checksums
+      run: |
+        cd target
+        sha256sum civilization-simulator-java-*.jar > checksums.txt
+        cat checksums.txt
+
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v2
+      with:
+        tag_name: ${{ steps.get_version.outputs.TAG }}
+        name: Release ${{ steps.get_version.outputs.VERSION }}
+        draft: false
+        prerelease: false
+        generate_release_notes: true
+        files: |
+          target/civilization-simulator-java-*.jar
+          target/checksums.txt
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+    - name: Deploy to PackageCloud
+      if: success()
+      env:
+        PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
+      run: |
+        # Install packagecloud CLI
+        gem install package_cloud
+
+        # Deploy to packagecloud.io
+        # Format: package_cloud push [repo] [package_file]
+        package_cloud push FlossWare/civilization-simulator/java/any/any target/civilization-simulator-java-${{ steps.get_version.outputs.VERSION }}.jar || true
+
+    - name: Update latest tag
+      if: success()
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        git tag -fa latest -m "Latest release: ${{ steps.get_version.outputs.VERSION }}"
+        git push origin latest --force
