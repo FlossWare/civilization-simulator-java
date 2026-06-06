@@ -50,6 +50,20 @@
         <url>https://github.com/FlossWare/civilization-simulator-java/actions</url>
     </ciManagement>
 
+    <scm>
+        <connection>scm:git:https://github.com/FlossWare/civilization-simulator-java.git</connection>
+        <developerConnection>scm:git:https://github.com/FlossWare/civilization-simulator-java.git</developerConnection>
+        <url>https://github.com/FlossWare/civilization-simulator-java</url>
+    </scm>
+
+    <distributionManagement>
+        <repository>
+            <id>packagecloud-flossware</id>
+            <name>packagecloud-flossware</name>
+            <url>https://packagecloud.io/flossware/java/maven2/</url>
+        </repository>
+    </distributionManagement>
+
     <packaging>jar</packaging>
 
     <properties>
@@ -147,6 +161,30 @@
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-jar-plugin</artifactId>
                 <version>${maven-jar-plugin.version}</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>build-helper-maven-plugin</artifactId>
+                <version>3.5.0</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.codehaus.mojo</groupId>
+                <artifactId>versions-maven-plugin</artifactId>
+                <version>2.16.0</version>
+            </plugin>
+
+            <plugin>
+                <groupId>org.apache.maven.plugins</groupId>
+                <artifactId>maven-scm-plugin</artifactId>
+                <version>2.0.1</version>
+                <configuration>
+                    <providerImplementations>
+                        <git>git</git>
+                    </providerImplementations>
+                    <tag>${project.version}</tag>
+                </configuration>
             </plugin>
 
             <plugin>

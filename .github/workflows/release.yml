@@ -35,6 +35,25 @@ jobs:
         distribution: 'temurin'
         cache: maven
 
+    - name: Configure Maven settings for PackageCloud
+      uses: s4u/maven-settings-action@v3.1.0
+      with:
+        githubServer: false
+        servers: |
+          [
+            {
+              "id": "packagecloud-flossware",
+              "configuration": {
+                "httpHeaders": {
+                  "property": {
+                    "name": "Authorization",
+                    "value": "Bearer ${{ secrets.PACKAGECLOUD_TOKEN }}"
+                  }
+                }
+              }
+            }
+          ]
+
     - name: Update POM version
       run: |
         mvn versions:set -DnewVersion=${{ steps.get_version.outputs.VERSION }} -DgenerateBackupPoms=false
@@ -67,15 +86,9 @@ jobs:
 
     - name: Deploy to PackageCloud
       if: success()
-      env:
-        PACKAGECLOUD_TOKEN: ${{ secrets.PACKAGECLOUD_TOKEN }}
       run: |
-        # Install packagecloud CLI
-        sudo gem install package_cloud
-
-        # Deploy to packagecloud.io
-        # Format: package_cloud push [repo] [package_file]
-        package_cloud push FlossWare/civilization-simulator/java/any/any target/civilization-simulator-java-${{ steps.get_version.outputs.VERSION }}.jar || true
+        # Deploy to packagecloud.io using Maven
+        mvn -DskipTests deploy
 
     - name: Update latest tag
       if: success()

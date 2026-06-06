@@ -19,18 +19,21 @@ This document explains how to configure PackageCloud.io deployment for the Civil
    - **Name**: `PACKAGECLOUD_TOKEN`
    - **Value**: Your PackageCloud API token (from https://packagecloud.io/api_token)
 
-### 2. Verify Repository Name
+### 2. Verify Repository Configuration
 
-The release workflow is configured to deploy to:
-```
-FlossWare/civilization-simulator/java/any/any
+The release workflow uses Maven deploy to push to PackageCloud. The repository is configured in `pom.xml`:
+
+```xml
+<distributionManagement>
+    <repository>
+        <id>packagecloud-flossware</id>
+        <name>packagecloud-flossware</name>
+        <url>https://packagecloud.io/flossware/java/maven2/</url>
+    </repository>
+</distributionManagement>
 ```
 
-If your repository name is different, update `.github/workflows/release.yml`:
-
-```yaml
-package_cloud push YOUR_ORG/YOUR_REPO/java/any/any target/civilization-simulator-java-*.jar
-```
+If your PackageCloud organization or repository name is different, update the URL in `pom.xml`.
 
 ## Creating a PackageCloud Repository
 
@@ -45,29 +48,50 @@ If you haven't created the repository yet:
 
 To deploy manually from your local machine:
 
+### Option 1: Maven Deploy (Recommended)
+
+```bash
+# Build the project
+mvn clean package
+
+# Deploy to PackageCloud (requires PACKAGECLOUD_TOKEN in Maven settings)
+mvn deploy -DskipTests
+```
+
+### Option 2: PackageCloud CLI
+
 ```bash
 # Install packagecloud CLI
 gem install package_cloud
 
+# Set token
+export PACKAGECLOUD_TOKEN=your_token_here
+
 # Deploy JAR
-package_cloud push FlossWare/civilization-simulator/java/any/any target/civilization-simulator-java-1.0.jar
+package_cloud push flossware/java target/civilization-simulator-java-1.0.jar
 ```
 
-## Automated Release Process
+## Automated Release Processes
 
-Once configured, releases happen automatically:
+This project has two automated workflows:
 
-1. **Trigger Version Bump**:
-   - Go to Actions → "Version Bump" workflow
-   - Run workflow with major or minor bump
+### 1. CD-CI Workflow (Auto-bump on main branch push)
 
-2. **Automatic Steps**:
-   - Version bumped in all files
-   - Git tag created (`v1.1`, `v2.0`, etc.)
-   - Tag push triggers release workflow
-   - JAR built and tested
-   - GitHub Release created
-   - JAR deployed to PackageCloud.io
+Triggered automatically on every push to `main` branch:
+- Auto-increments minor version (1.0 → 1.1)
+- Updates dependencies to latest versions
+- Builds and tests
+- Deploys to PackageCloud
+- Creates git tag
+- Commits version bump back to main
+
+### 2. Release Workflow (Manual tag-based)
+
+Triggered by creating version tags (`v1.0`, `v2.0`, etc.):
+- Builds and tests at specific version
+- Creates GitHub Release with artifacts
+- Deploys to PackageCloud
+- Updates `latest` tag
 
 ## Verifying Deployment
 
