@@ -15,6 +15,11 @@ import java.util.SplittableRandom;
  */
 public final class ClimateModule {
 
+    // Disaster threshold constants - calibrated for realistic frequencies
+    // Thresholds set to trigger ~2-3% of years (roughly 1 disaster per 30-50 years)
+    private static final double STORM_FREQUENCY_THRESHOLD = 2.8;  // Out of 0-5 range
+    private static final double DROUGHT_INDEX_THRESHOLD = 0.97;   // Very severe drought only
+
     private ClimateModule() {
         // Utility class
     }
@@ -63,7 +68,8 @@ public final class ClimateModule {
         // Generate events
         List<Event> events = new ArrayList<>();
 
-        if (newStormFrequency > 1.5 || newDroughtIndex > 0.9) {
+        // Disaster thresholds calibrated for realistic frequency (~2-3% of years)
+        if (newStormFrequency > STORM_FREQUENCY_THRESHOLD || newDroughtIndex > DROUGHT_INDEX_THRESHOLD) {
             String description = buildDisasterDescription(newStormFrequency, newDroughtIndex);
             EventSeverity severity = determineSeverity(newStormFrequency, newDroughtIndex);
 
@@ -92,12 +98,12 @@ public final class ClimateModule {
      * Build a descriptive message for climate disaster events.
      */
     private static String buildDisasterDescription(double stormFrequency, double droughtIndex) {
-        if (stormFrequency > 1.5 && droughtIndex > 0.9) {
+        if (stormFrequency > STORM_FREQUENCY_THRESHOLD && droughtIndex > DROUGHT_INDEX_THRESHOLD) {
             return String.format(
                 "Extreme climate conditions: severe storms (%.2f) and severe drought (%.2f)",
                 stormFrequency, droughtIndex
             );
-        } else if (stormFrequency > 1.5) {
+        } else if (stormFrequency > STORM_FREQUENCY_THRESHOLD) {
             return String.format("Severe storm activity detected (frequency: %.2f)", stormFrequency);
         } else {
             return String.format("Severe drought conditions (index: %.2f)", droughtIndex);
@@ -108,14 +114,14 @@ public final class ClimateModule {
      * Determine event severity based on climate conditions.
      */
     private static EventSeverity determineSeverity(double stormFrequency, double droughtIndex) {
-        boolean extremeStorms = stormFrequency > 2.0;
-        boolean extremeDrought = droughtIndex > 0.95;
+        boolean extremeStorms = stormFrequency > 3.5;
+        boolean extremeDrought = droughtIndex > 0.985;
 
-        if (extremeStorms || extremeDrought) {
+        if (extremeStorms && extremeDrought) {
             return EventSeverity.CRITICAL;
-        } else if (stormFrequency > 1.5 && droughtIndex > 0.9) {
+        } else if (stormFrequency > STORM_FREQUENCY_THRESHOLD && droughtIndex > DROUGHT_INDEX_THRESHOLD) {
             return EventSeverity.CRITICAL;
-        } else if (stormFrequency > 1.8 || droughtIndex > 0.93) {
+        } else if (stormFrequency > 3.2 || droughtIndex > 0.98) {
             return EventSeverity.MAJOR;
         } else {
             return EventSeverity.MAJOR;

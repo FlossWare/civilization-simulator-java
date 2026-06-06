@@ -21,10 +21,24 @@ import java.util.List;
 public class CivilizationSimulator {
 
     public static void main(String[] args) throws Exception {
-        String mode = args.length > 0 ? args[0] : "monte";
+        // Handle help and validation
+        if (args.length == 0 || "help".equals(args[0]) || "--help".equals(args[0]) || "-h".equals(args[0])) {
+            printUsage();
+            System.exit(0);
+        }
+
+        String mode = args[0];
+
+        // Validate command
+        if (!"single".equals(mode) && !"monte".equals(mode) && !"montecarlo".equals(mode)) {
+            System.err.println("Error: Unknown command '" + mode + "'");
+            System.err.println();
+            printUsage();
+            System.exit(1);
+        }
 
         System.out.println("=".repeat(80));
-        System.out.println("Alternate History Civilization Simulator v1.0");
+        System.out.println("Alternate History Civilization Simulator v1.1");
         System.out.println("=".repeat(80));
         System.out.println();
 
@@ -40,6 +54,20 @@ public class CivilizationSimulator {
         } else {
             runMonteCarloAnalysis(scenario);
         }
+    }
+
+    private static void printUsage() {
+        System.out.println("Usage: java -jar civilization-simulator-java-1.1.jar <command>");
+        System.out.println();
+        System.out.println("Commands:");
+        System.out.println("  single      Run a single simulation");
+        System.out.println("  monte       Run Monte Carlo analysis (50 runs)");
+        System.out.println("  montecarlo  Alias for 'monte'");
+        System.out.println("  help        Show this help message");
+        System.out.println();
+        System.out.println("Examples:");
+        System.out.println("  java -jar civilization-simulator-java-1.1.jar single");
+        System.out.println("  java -jar civilization-simulator-java-1.1.jar monte");
     }
 
     private static void runSingleSimulation(Scenario scenario) {

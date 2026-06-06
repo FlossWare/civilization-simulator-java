@@ -158,11 +158,11 @@ public final class RomeEnuresScenario {
 
     private static WorldConstraints createWorldConstraints() {
         return new WorldConstraints(
-            0.6,   // Political stability
-            0.45,  // War frequency
-            0.25,  // Climate volatility
-            0.22,  // Plague probability
-            0.65   // Resource abundance
+            0.6,    // Political stability
+            0.45,   // War frequency
+            0.25,   // Climate volatility
+            0.015,  // Plague probability (reduced from 0.22 to ~1.5% per year = ~once per 67 years)
+            0.65    // Resource abundance
         );
     }
 

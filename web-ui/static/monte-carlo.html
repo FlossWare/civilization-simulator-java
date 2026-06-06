@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Monte Carlo Analysis - Civilization Simulator</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Monte Carlo Analysis</h1>
+            <a href="index.html" class="btn btn-secondary">Back to Home</a>
+        </header>
+
+        <div class="mc-controls">
+            <h2>Configuration</h2>
+            <div class="mc-form-row">
+                <div class="form-group">
+                    <label for="numRuns">Number of Runs:</label>
+                    <input type="number" id="numRuns" value="50" min="2" max="200">
+                    <p class="help-text">2 - 200 runs (more = better statistics, longer runtime)</p>
+                </div>
+                <div class="form-group">
+                    <label for="baseSeed">Base Seed:</label>
+                    <input type="number" id="baseSeed" value="12345">
+                    <p class="help-text">Each run derives its seed from this base</p>
+                </div>
+            </div>
+            <button id="mcRunBtn" class="btn btn-primary btn-large">Run Monte Carlo Analysis</button>
+
+            <div id="mcLoading" class="progress-container" style="display: none;">
+                <div class="progress-bar-track">
+                    <div id="progressFill" class="progress-bar-fill"></div>
+                </div>
+                <p id="progressText" class="progress-text">Starting...</p>
+            </div>
+        </div>
+
+        <div id="mcResults" style="display: none;">
+            <div class="mc-summary-grid">
+                <div class="mc-summary-card">
+                    <span class="mc-value" id="avgPop">---</span>
+                    <span class="mc-label">Avg. Population</span>
+                </div>
+                <div class="mc-summary-card">
+                    <span class="mc-value" id="avgWealth">---</span>
+                    <span class="mc-label">Avg. Wealth</span>
+                </div>
+                <div class="mc-summary-card">
+                    <span class="mc-value" id="avgTechs">---</span>
+                    <span class="mc-label">Avg. Technologies</span>
+                </div>
+                <div class="mc-summary-card">
+                    <span class="mc-value" id="survivalRate">---</span>
+                    <span class="mc-label">Survival Rate</span>
+                </div>
+                <div class="mc-summary-card">
+                    <span class="mc-value" id="totalDuration">---</span>
+                    <span class="mc-label">Total Duration</span>
+                </div>
+            </div>
+
+            <div class="mc-charts-grid">
+                <div class="mc-chart-card">
+                    <h3>Population Distribution</h3>
+                    <canvas id="popHistChart"></canvas>
+                </div>
+                <div class="mc-chart-card">
+                    <h3>Technology Distribution</h3>
+                    <canvas id="techHistChart"></canvas>
+                </div>
+                <div class="mc-chart-card full-width">
+                    <h3>Wealth Comparison (Top 20 Runs)</h3>
+                    <canvas id="wealthBarChart"></canvas>
+                </div>
+            </div>
+
+            <div class="mc-runs-table">
+                <h3>All Runs</h3>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Run</th>
+                            <th>Seed</th>
+                            <th>Population</th>
+                            <th>Wealth</th>
+                            <th>Techs</th>
+                            <th>Stability</th>
+                            <th>Events</th>
+                            <th>Duration</th>
+                        </tr>
+                    </thead>
+                    <tbody id="runsTableBody">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <footer>
+            <p>FlossWare Civilization Simulator |
+               <a href="https://github.com/FlossWare/civilization-simulator-java">GitHub</a> |
+               <a href="https://packagecloud.io/flossware/java">Download</a>
+            </p>
+            <p class="license">Licensed under GPL-3.0</p>
+        </footer>
+    </div>
+
+    <script src="js/main.js"></script>
+    <script src="js/monte-carlo.js"></script>
+</body>
+</html>

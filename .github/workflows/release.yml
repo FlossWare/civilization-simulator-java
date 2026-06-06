@@ -87,9 +87,30 @@ jobs:
     - name: Deploy to PackageCloud
       if: success()
       run: |
-        # Deploy to packagecloud.io using Maven
-        # Note: POM upload may fail (422) but JAR upload succeeds
-        mvn -DskipTests deploy || true
+        set -o pipefail
+        mvn -DskipTests deploy 2>&1 | tee deploy.log || true
+        DEPLOY_EXIT_CODE=${PIPESTATUS[0]}
+
+        if [ "$DEPLOY_EXIT_CODE" -eq 0 ]; then
+          echo "Deployment succeeded."
+          exit 0
+        fi
+
+        # Known issue #1: PackageCloud rejects POM uploads with HTTP 422
+        # but JAR uploads succeed. Only tolerate this specific failure.
+        if grep -qE "(422.*Unprocessable Entity|Failed to deploy artifacts.*\.pom|PUT.*\.pom.*422)" deploy.log; then
+          # Verify the failure is limited to POM files only
+          NON_POM_FAILURES=$(grep -c "Failed to deploy artifacts" deploy.log | head -1)
+          POM_FAILURES=$(grep "Failed to deploy artifacts" deploy.log | grep -c "\.pom" || true)
+          if [ "$NON_POM_FAILURES" -eq "$POM_FAILURES" ] 2>/dev/null; then
+            echo "::warning::POM upload rejected by PackageCloud (known issue #1). JAR deployment succeeded."
+            exit 0
+          fi
+        fi
+
+        # Any other failure is a real deployment problem that must block the latest tag update.
+        echo "::error::Deployment failed with exit code $DEPLOY_EXIT_CODE. Review the log output above."
+        exit 1
 
     - name: Update latest tag
       if: success()

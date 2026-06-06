@@ -22,11 +22,19 @@ public class SimpleServer {
     public static void main(String[] args) throws IOException {
         HttpServer server = HttpServer.create(new InetSocketAddress(PORT), 0);
 
-        // Serve static files
-        server.createContext("/", new StaticFileHandler());
+        // API endpoints (return JSON stubs; real integration requires the simulator JAR on classpath)
+        server.createContext("/api/simulate", new ApiHandler(
+            "{\"error\":\"Backend simulation not available. Use the browser-based simulation (no backend required).\"}"
+        ));
+        server.createContext("/api/monte-carlo", new ApiHandler(
+            "{\"error\":\"Backend Monte Carlo not available. Use the browser-based analysis (no backend required).\"}"
+        ));
+        server.createContext("/api/health", new ApiHandler(
+            "{\"status\":\"ok\",\"mode\":\"static\",\"message\":\"Server is running. Simulation runs in the browser.\"}"
+        ));
 
-        // API endpoints would go here
-        // server.createContext("/api/simulate", new SimulateHandler());
+        // Serve static files (must be last, as it catches all paths)
+        server.createContext("/", new StaticFileHandler());
 
         server.setExecutor(null);
         server.start();
@@ -37,6 +45,29 @@ public class SimpleServer {
         System.out.println("Server running at: http://localhost:" + PORT);
         System.out.println("Press Ctrl+C to stop");
         System.out.println("=".repeat(60));
+    }
+
+    /**
+     * Simple API handler that returns a fixed JSON response.
+     * In a full integration, these would invoke the simulation engine.
+     */
+    static class ApiHandler implements HttpHandler {
+        private final String jsonResponse;
+
+        ApiHandler(String jsonResponse) {
+            this.jsonResponse = jsonResponse;
+        }
+
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            byte[] responseBytes = jsonResponse.getBytes(StandardCharsets.UTF_8);
+            exchange.getResponseHeaders().set("Content-Type", "application/json");
+            exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+            exchange.sendResponseHeaders(200, responseBytes.length);
+            try (OutputStream os = exchange.getResponseBody()) {
+                os.write(responseBytes);
+            }
+        }
     }
 
     static class StaticFileHandler implements HttpHandler {
@@ -140,6 +171,11 @@ public class SimpleServer {
             if (path.endsWith(".css")) return "text/css";
             if (path.endsWith(".js")) return "application/javascript";
             if (path.endsWith(".json")) return "application/json";
+            if (path.endsWith(".png")) return "image/png";
+            if (path.endsWith(".svg")) return "image/svg+xml";
+            if (path.endsWith(".ico")) return "image/x-icon";
+            if (path.endsWith(".woff2")) return "font/woff2";
+            if (path.endsWith(".woff")) return "font/woff";
             return "text/plain";
         }
     }

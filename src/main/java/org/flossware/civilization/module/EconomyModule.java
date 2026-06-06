@@ -18,12 +18,13 @@ import java.util.SplittableRandom;
 public final class EconomyModule {
 
     private static final double BASE_PRODUCTIVITY = 1.0;
-    private static final double PER_CAPITA_CONSUMPTION = 0.8;
+    private static final double PER_CAPITA_CONSUMPTION = 0.15;  // Reduced from 0.8 to create surplus (target: 0.2 per capita)
     private static final double AVERAGE_PRICE_LEVEL = 1.0;
     private static final double TRADE_SURPLUS_MODIFIER = 0.2;
     private static final double BOOM_THRESHOLD = 0.5;  // 50% increase
     private static final double COLLAPSE_THRESHOLD = -0.3;  // 30% decrease
     private static final double WORKFORCE_RATIO = 0.15;  // 15% of population as working-age adults
+    private static final double WEALTH_PRODUCTIVITY_BONUS = 0.1;  // Bonus per 10M wealth (positive feedback)
 
     /**
      * Ticks economy forward by one time step.
@@ -56,6 +57,11 @@ public final class EconomyModule {
         // Calculate productivity based on technology
         double techMultiplier = calculateTechMultiplier(unlockedTechs);
         double productivity = BASE_PRODUCTIVITY * techMultiplier;
+
+        // Add wealth-based productivity bonus: richer economies are more efficient
+        // For every 10M wealth, add 10% productivity bonus (max 2.0x at 100M+ wealth)
+        double wealthBonus = Math.min(1.0, (current.wealth() / 10_000_000.0) * WEALTH_PRODUCTIVITY_BONUS);
+        productivity *= (1.0 + wealthBonus);
 
         // Production: workers * productivity * resource abundance
         double production = workers * productivity * resourceAbundance;

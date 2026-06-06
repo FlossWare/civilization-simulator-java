@@ -63,14 +63,41 @@ jobs:
 
       - name: Verify build success
         run: |
-          if [ ! -f target/civilization-simulator-java-*.jar ]; then
-            echo "Build failed - artifact not found"
+          JAR_FILE="target/$(mvn help:evaluate -Dexpression=project.build.finalName -q -DforceStdout).jar"
+          if [ ! -f "$JAR_FILE" ]; then
+            echo "Build failed - expected JAR not found: $JAR_FILE"
+            echo "Contents of target directory:"
+            ls -la target/*.jar 2>/dev/null || echo "No JAR files in target directory"
             exit 1
           fi
           echo "Build succeeded - deploying to packagecloud.io"
 
       - name: Deploy to packagecloud.io
-        run: "mvn -DskipTests deploy || true"
+        run: |
+          set -o pipefail
+          mvn -DskipTests deploy 2>&1 | tee deploy.log || true
+          DEPLOY_EXIT_CODE=${PIPESTATUS[0]}
+
+          if [ "$DEPLOY_EXIT_CODE" -eq 0 ]; then
+            echo "Deployment succeeded."
+            exit 0
+          fi
+
+          # Known issue #1: PackageCloud rejects POM uploads with HTTP 422
+          # but JAR uploads succeed. Only tolerate this specific failure.
+          if grep -qE "(422.*Unprocessable Entity|Failed to deploy artifacts.*\.pom|PUT.*\.pom.*422)" deploy.log; then
+            # Verify the failure is limited to POM files only
+            NON_POM_FAILURES=$(grep -c "Failed to deploy artifacts" deploy.log | head -1)
+            POM_FAILURES=$(grep "Failed to deploy artifacts" deploy.log | grep -c "\.pom" || true)
+            if [ "$NON_POM_FAILURES" -eq "$POM_FAILURES" ] 2>/dev/null; then
+              echo "::warning::POM upload rejected by PackageCloud (known issue #1). JAR deployment succeeded."
+              exit 0
+            fi
+          fi
+
+          # Any other failure is a real deployment problem that must block tagging.
+          echo "::error::Deployment failed with exit code $DEPLOY_EXIT_CODE. Review the log output above."
+          exit 1
 
       - name: Checkin and tag to github
         run: "mvn scm:checkin scm:tag"
