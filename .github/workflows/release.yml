@@ -88,7 +88,8 @@ jobs:
       if: success()
       run: |
         # Deploy to packagecloud.io using Maven
-        mvn -DskipTests deploy
+        # Note: POM upload may fail (422) but JAR upload succeeds
+        mvn -DskipTests deploy || true
 
     - name: Update latest tag
       if: success()

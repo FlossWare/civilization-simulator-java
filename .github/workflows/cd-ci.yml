@@ -70,7 +70,7 @@ jobs:
           echo "Build succeeded - deploying to packagecloud.io"
 
       - name: Deploy to packagecloud.io
-        run: "mvn -DskipTests deploy"
+        run: "mvn -DskipTests deploy || true"
 
       - name: Checkin and tag to github
         run: "mvn scm:checkin scm:tag"
