@@ -8,7 +8,8 @@ public record WorldConstraints(
     double warFrequency,
     double climateVolatility,
     double plagueProbability,
-    double resourceAbundance
+    double resourceAbundance,
+    double randomEventFrequency
 ) {
     public WorldConstraints {
         validateRange(politicalStability, "politicalStability");
@@ -16,11 +17,18 @@ public record WorldConstraints(
         validateRange(climateVolatility, "climateVolatility");
         validateRange(plagueProbability, "plagueProbability");
         validateRange(resourceAbundance, "resourceAbundance");
+        validateFrequencyRange(randomEventFrequency, "randomEventFrequency");
     }
 
     private void validateRange(double value, String name) {
         if (value < 0 || value > 1) {
             throw new IllegalArgumentException(name + " must be in [0, 1]: " + value);
+        }
+    }
+
+    private void validateFrequencyRange(double value, String name) {
+        if (value < 0 || value > 2) {
+            throw new IllegalArgumentException(name + " must be in [0, 2]: " + value);
         }
     }
 }

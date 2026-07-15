@@ -113,7 +113,8 @@ public final class RomeEnduresScenario {
             politics,
             military,
             climate,
-            religion
+            religion,
+            new RandomEventState(Integer.MIN_VALUE)
         );
     }
 
@@ -130,7 +131,8 @@ public final class RomeEnduresScenario {
             0.45,   // War frequency
             0.25,   // Climate volatility
             0.015,  // Plague probability (reduced from 0.22 to ~1.5% per year = ~once per 67 years)
-            0.65    // Resource abundance
+            0.65,   // Resource abundance
+            1.0     // Random event frequency
         );
     }
 

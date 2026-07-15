@@ -26,7 +26,17 @@ public record Event(
         CLIMATE_DISASTER,
         RELIGIOUS_SCHISM,
         TRADE_ROUTE_ESTABLISHED,
-        GOVERNMENT_CHANGE
+        GOVERNMENT_CHANGE,
+        METEOR_STRIKE,
+        GREAT_PANDEMIC,
+        GOLDEN_AGE,
+        GREAT_FAMINE,
+        FOREIGN_INVASION,
+        RENAISSANCE,
+        VOLCANIC_ERUPTION,
+        GREAT_FLOOD,
+        CIVIL_WAR,
+        DIPLOMATIC_MARRIAGE
     }
 
     public enum EventSeverity {

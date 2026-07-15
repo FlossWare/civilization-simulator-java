@@ -18,6 +18,7 @@ import java.util.Objects;
  * 5. ReligionModule (Spread, conversion, schisms)
  * 6. PoliticsModule (Stability, succession, rebellion)
  * 7. MilitaryModule (War resolution, territorial changes)
+ * 8. RandomEventModule (Rare high-impact events)
  */
 final class TickExecutor {
 
@@ -35,7 +36,8 @@ final class TickExecutor {
             new TechnologyModule(techGraph),
             new ReligionModule(),
             new PoliticsModule(),
-            new MilitaryModule()
+            new MilitaryModule(),
+            new RandomEventModule()
         );
     }
 
