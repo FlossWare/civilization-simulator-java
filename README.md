@@ -13,16 +13,16 @@ What if Rome never fell? What if the Ming Dynasty never closed its borders? Give
 mvn clean package -q
 
 # Run a single simulation (default: Rome scenario)
-java -jar target/civilization-simulator-java-1.10.jar single --seed 42
+java -jar target/civilization-simulator-java-*.jar single --seed 42
 
 # Run with a different scenario
-java -jar target/civilization-simulator-java-1.10.jar single --scenario ming --seed 42
+java -jar target/civilization-simulator-java-*.jar single --scenario ming --seed 42
 
 # Run Monte Carlo analysis (50 parallel runs)
-java -jar target/civilization-simulator-java-1.10.jar monte --runs 50 --seed 12345
+java -jar target/civilization-simulator-java-*.jar monte --runs 50 --seed 12345
 
 # Start the web UI
-java -jar target/civilization-simulator-java-1.10.jar server --port 8080
+java -jar target/civilization-simulator-java-*.jar server --port 8080
 # Open http://localhost:8080
 ```
 
@@ -43,6 +43,40 @@ Choose a scenario and run a single simulation to visualize population, economy, 
 Run 2-200 simulations with statistical analysis across all runs:
 
 ![Monte Carlo](docs/screenshots/monte-carlo.png)
+
+## Mobile App (KMM)
+
+A Kotlin Multiplatform Mobile port of the simulation engine lives in `mobile/`. It shares the same deterministic simulation logic across Android (Jetpack Compose) and iOS (SwiftUI).
+
+```
+mobile/
+├── shared/             # KMM shared module (commonMain)
+│   └── src/commonMain/kotlin/org/flossware/civilization/
+│       ├── model/          # @Serializable data classes
+│       ├── module/         # 8 simulation modules (same logic as Java)
+│       ├── engine/         # SimulationEngine, MonteCarloRunner
+│       ├── scenarios/      # ScenarioRegistry + 6 scenarios + StandardTechTree
+│       └── util/           # SeedManager
+├── androidApp/         # Jetpack Compose UI with scenario selector
+└── iosApp/             # SwiftUI UI with scenario picker
+```
+
+Both apps feature scenario selection, single-run simulation, and Monte Carlo analysis with 50 parallel runs.
+
+**Build:**
+
+```bash
+cd mobile
+
+# Compile shared KMM code
+./gradlew :shared:compileCommonMainKotlinMetadata
+
+# Build Android APK (requires Android SDK)
+./gradlew :androidApp:assembleDebug
+
+# iOS — open in Xcode
+open iosApp/iosApp.xcodeproj
+```
 
 ## Architecture
 
