@@ -2,7 +2,7 @@
 
 A deterministic alternate-history civilization simulator built in Java 21.
 
-What if Rome never fell? Given a seed and a scenario, it simulates 2,000+ years of civilization across seven interconnected domains — population, economy, technology, climate, politics, military, and religion. Every run with the same seed produces identical results, making it suitable for Monte Carlo analysis and reproducible experimentation.
+What if Rome never fell? What if the Ming Dynasty never closed its borders? Given a seed and a scenario, it simulates centuries of civilization across eight interconnected domains — population, economy, technology, climate, politics, military, religion, and random black swan events. Six pre-built alternate-history scenarios span from 3500 BCE to 2026 CE. Every run with the same seed produces identical results, making it suitable for Monte Carlo analysis and reproducible experimentation.
 
 ![Home Page](docs/screenshots/home.png)
 
@@ -12,8 +12,11 @@ What if Rome never fell? Given a seed and a scenario, it simulates 2,000+ years 
 # Build
 mvn clean package -q
 
-# Run a single simulation
+# Run a single simulation (default: Rome scenario)
 java -jar target/civilization-simulator-java-1.10.jar single --seed 42
+
+# Run with a different scenario
+java -jar target/civilization-simulator-java-1.10.jar single --scenario ming --seed 42
 
 # Run Monte Carlo analysis (50 parallel runs)
 java -jar target/civilization-simulator-java-1.10.jar monte --runs 50 --seed 12345
@@ -31,7 +34,7 @@ The built-in web server serves a Chart.js dashboard for interactive simulation a
 
 ### Simulation View
 
-Run a single simulation and visualize population, economy, and technology over 2,053 years:
+Choose a scenario and run a single simulation to visualize population, economy, and technology:
 
 ![Simulation Results](docs/screenshots/simulation-results.png)
 
@@ -56,6 +59,7 @@ src/main/java/org/flossware/civilization/
 │   ├── PoliticsState       # Stability, rebellion, succession
 │   ├── MilitaryState       # Army, wars, defense
 │   ├── ReligionState       # Religion shares, unity
+│   ├── RandomEventState    # Black swan event cooldown tracking
 │   └── TechGraph           # DAG with cycle detection
 ├── module/             # Stateless tick functions
 │   ├── PopulationModule    # Growth, plague, carrying capacity
@@ -64,14 +68,22 @@ src/main/java/org/flossware/civilization/
 │   ├── ClimateModule       # Temperature, disasters, resources
 │   ├── PoliticsModule      # Mean-reverting stability, war exhaustion
 │   ├── MilitaryModule      # War probability, army scaling
-│   └── ReligionModule      # Spread, conversion, schisms
+│   ├── ReligionModule      # Spread, conversion, schisms
+│   └── RandomEventModule   # Black swan events (pandemics, golden ages, etc.)
 ├── engine/             # Simulation execution
 │   ├── SimulationEngine    # Variable-tick loop (1-10 year ticks)
 │   ├── MonteCarloRunner    # Parallel execution with ExecutorService
 │   ├── TickType            # Adaptive time steps based on volatility
 │   └── SeedManager         # Hierarchical deterministic seeding
 ├── scenarios/
-│   └── RomeEnduresScenario # "What if Rome never fell?" (27 BCE → 2026 CE)
+│   ├── ScenarioRegistry    # Lookup by ID, lists available scenarios
+│   ├── StandardTechTree    # Shared 21-technology DAG
+│   ├── RomeEnduresScenario # "What if Rome never fell?" (27 BCE → 2026 CE)
+│   ├── SumerianScenario    # "Cradle of Civilization" (3500 BCE → 539 BCE)
+│   ├── CarolingianScenario # "Holy Empire" (800 CE → 1500 CE)
+│   ├── MingDynastyScenario # "Ming Dynastic Glory" (1368 CE → 1800 CE)
+│   ├── BritishEmpireScenario # "British Empire Ascendant" (1750 CE → 2000 CE)
+│   └── IncaScenario        # "Inca Dominion" (1200 CE → 1600 CE)
 └── web/
     └── WebServer           # REST API + static file server
 ```
@@ -99,22 +111,41 @@ The engine adapts its time step based on current conditions:
 ## REST API
 
 ```
-POST /api/simulate      {"seed": 42}                    → simulation results + snapshots
-POST /api/monte-carlo   {"numRuns": 50, "baseSeed": 42} → statistical analysis + per-run data
-GET  /api/health                                        → {"status": "ok"}
+GET  /api/scenarios                                              → list available scenarios
+POST /api/simulate      {"seed": 42, "scenario": "ming"}        → simulation results + snapshots
+POST /api/monte-carlo   {"numRuns": 50, "baseSeed": 42}         → statistical analysis + per-run data
+GET  /api/health                                                 → {"status": "ok"}
 ```
 
-## Default Scenario: Rome Endures
+The `scenario` field is optional (defaults to `rome`). Available IDs: `rome`, `sumerian`, `carolingian`, `ming`, `british`, `inca`.
 
-The built-in scenario starts at 27 BCE with the Roman Empire and simulates through 2026 CE:
+## Scenarios
 
-- **Population**: 56M initial, logistic growth with plague and famine
-- **Economy**: 1B denarii starting wealth, trade route expansion
-- **Technology**: 20-node tech tree (Agriculture → Spaceflight) with prerequisite DAG
-- **Climate**: Volcanic eruptions, temperature anomalies, resource impacts
-- **Politics**: Mean-reverting stability, rebellion at <20%, succession crises
-- **Military**: War probability tied to economy and politics
-- **Religion**: Roman Polytheism start, conversion mechanics, schisms
+Six alternate-history scenarios, each with unique starting conditions:
+
+| Scenario | Era | Capital | Starting Pop | Question |
+|----------|-----|---------|-------------|----------|
+| **Rome Endures** | 27 BCE – 2026 CE | Rome | 56M | What if Rome never fell? |
+| **Cradle of Civilization** | 3500 BCE – 539 BCE | Uruk | 200K | What if Sumerian city-states unified? |
+| **Holy Empire** | 800 CE – 1500 CE | Aachen | 10M | What if Charlemagne's empire held? |
+| **Ming Dynastic Glory** | 1368 CE – 1800 CE | Beijing | 60M | What if the Ming never closed borders? |
+| **British Empire Ascendant** | 1750 CE – 2000 CE | London | 15M | What if the Empire adapted and endured? |
+| **Inca Dominion** | 1200 CE – 1600 CE | Cusco | 1M | What if the Inca resisted European contact? |
+
+All scenarios share a 21-technology DAG but start with different techs unlocked, population levels, economies, and political systems.
+
+## Simulation Domains
+
+Seven modules run sequentially each tick, plus a random event system:
+
+- **Population**: Logistic growth, plague, carrying capacity
+- **Economy**: Production, trade routes, taxation
+- **Technology**: Research progress, diffusion, prerequisite unlocks
+- **Climate**: Temperature anomalies, droughts, storms
+- **Politics**: Mean-reverting stability, rebellion, succession crises
+- **Military**: War probability, army scaling, territorial changes
+- **Religion**: Conversion mechanics, schisms, unity effects
+- **Random Events**: Black swan events (pandemics, golden ages, meteor strikes, invasions, etc.) with 25-year cooldowns and configurable frequency
 
 ## Tests
 
@@ -122,7 +153,7 @@ The built-in scenario starts at 27 BCE with the Roman Empire and simulates throu
 mvn test
 ```
 
-87 tests covering all simulation modules, tech tree validation, reproducibility, and performance.
+128 tests covering all simulation modules, scenario validation, random events, tech tree validation, reproducibility, and performance.
 
 ## Tech Stack
 
