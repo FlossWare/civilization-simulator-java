@@ -1,410 +1,138 @@
-# Alternate History Civilization Simulator
+# Civilization Simulator
 
-**Version:** 1.1  
-**License:** GPL-3.0  
-**Status:** Production-Ready
+A deterministic alternate-history civilization simulator built in Java 21.
 
-A high-performance, reproducible pseudo-random civilization simulator for exploring alternate history scenarios. Simulates the evolution of civilizations across millennia with technology diffusion, economy, politics, military, climate, religion, and more.
+What if Rome never fell? Given a seed and a scenario, it simulates 2,000+ years of civilization across seven interconnected domains — population, economy, technology, climate, politics, military, and religion. Every run with the same seed produces identical results, making it suitable for Monte Carlo analysis and reproducible experimentation.
 
-**Platforms:** Desktop (JAR), Web UI, Android, iOS
-
-## Features
-
-### Core Capabilities
-
-- **Reproducible Simulations**: Same seed + same scenario → identical results across machines/threads
-- **Monte Carlo Analysis**: Run thousands of scenarios in parallel to explore probability spaces
-- **Variable Time Steps**: Adaptive tick rate (monthly/yearly/decade) based on volatility
-- **Explicit Technology DAG**: No black boxes - every tech dependency is clear and validated
-- **Multi-Dimensional Modeling**: Population, economy, technology, politics, military, climate, religion, trade, migration
-
-### Performance (Verified)
-
-| Metric | Target | Achieved |
-|--------|--------|----------|
-| Single simulation (2,053 years) | < 2,100 ms | **65 ms** (32× faster) |
-| Years per millisecond | ~1 | **31.6** |
-| Monte Carlo (10 runs, 4 threads) | < 15 sec | **505 ms** |
-| Memory per run | < 50 MB | < 5 MB |
-
-### Architecture
-
-**Pure Functional Design**
-- Every module: `(state, params, seed) → newState`
-- No side effects, no hidden state
-- Fully parallelizable
-
-**Hierarchical Seed Management**
-```
-Base Seed (user-provided)
-  ├─ Run Seed 0 (Monte Carlo isolation)
-  │   ├─ Year -27 Seed
-  │   │   ├─ Climate Module Seed
-  │   │   ├─ Population Module Seed
-  │   │   └─ ...
-  │   └─ Year 2026 Seed
-  └─ Run Seed 1
-      └─ ...
-```
-
-**Module Execution Order** (strictly sequential per tick):
-1. Climate (temperature, drought, storms, sea level)
-2. Migration (population movement)
-3. Population (births, deaths, plague, carrying capacity)
-4. Economy (production, consumption, trade, GDP)
-5. Technology (research, diffusion, unlocks)
-6. Religion (spread, conversion, schisms)
-7. Politics (stability, rebellion, succession)
-8. Military (war, territorial changes)
+![Home Page](docs/screenshots/home.png)
 
 ## Quick Start
 
-### Prerequisites
-
-- Java 21+
-- Maven 3.9+
-
-### Build
-
 ```bash
-mvn clean package
+# Build
+mvn clean package -q
+
+# Run a single simulation
+java -jar target/civilization-simulator-java-1.10.jar single --seed 42
+
+# Run Monte Carlo analysis (50 parallel runs)
+java -jar target/civilization-simulator-java-1.10.jar monte --runs 50 --seed 12345
+
+# Start the web UI
+java -jar target/civilization-simulator-java-1.10.jar server --port 8080
+# Open http://localhost:8080
 ```
 
-### Run Single Simulation
+Requires Java 21+.
 
-```bash
-java -jar target/civilization-simulator-java-1.0.jar single
-```
+## Web UI
 
-Output:
-```
-================================================================================
-Alternate History Civilization Simulator v1.0
-================================================================================
+The built-in web server serves a Chart.js dashboard for interactive simulation and Monte Carlo analysis.
 
-Scenario: Rome Survives to Modern Era
-Description: What if the Western Roman Empire endured through history?
-Time range: -27 to 2026
-Duration: 2053 years
+### Simulation View
 
-Running single simulation...
+Run a single simulation and visualize population, economy, and technology over 2,053 years:
 
-================================================================================
-SIMULATION COMPLETE
-================================================================================
-Duration: 65 ms
-
-FINAL STATE (2026)
---------------------------------------------------------------------------------
-Civilization: Roman Empire
-Population: 15423891
-Wealth: 145876234
-GDP: 987234
-Technologies unlocked: 18
-Army size: 145876
-Political stability: 0.67
-Religious unity: 0.72
-
-Performance: 31.6 years/ms
-```
-
-### Run Monte Carlo Analysis
-
-```bash
-java -jar target/civilization-simulator-java-1.0.jar monte
-```
-
-## Example: Rome Endures Scenario
-
-The built-in scenario explores: *What if the Western Roman Empire survived to 2026?*
-
-**Initial Conditions (-27 BCE)**
-- Population: 5 million
-- Wealth: 50 million denarii
-- Technology: Classical era (agriculture, ironWorking, metallurgy)
-- Government: Empire under Augustus
-- Military: 250,000 legionaries, 50,000 navy
-
-**Tech Tree Injection**
-Modern technologies are available but must be researched through their prerequisite chains:
-- `semiconductor` requires `electricity` + `materials_science`
-- `electricity` requires `magnetism` + `copperSmelting`
-- Full DAG with 20+ technologies
-
-**Simulation Parameters**
-- Adaptive time steps: monthly (crisis) / yearly (normal) / decade (stable)
-- Climate volatility: 0.25
-- Plague probability: 0.22/year
-- War frequency: 0.45
-- 50 Monte Carlo runs
-
-## API Usage
-
-### Creating a Custom Scenario
-
-```java
-import org.flossware.civilization.model.*;
-import org.flossware.civilization.util.ScenarioBuilder;
-
-Scenario scenario = new ScenarioBuilder()
-    .withName("My Alternate History")
-    .withTimeRange(-1000, 2000)  // 3000 years
-    .withInitialState(createMyInitialState())
-    .withTechTree(createMyTechTree())
-    .withWorldConstraints(new WorldConstraints(
-        0.6,   // political stability
-        0.3,   // war frequency
-        0.2,   // climate volatility
-        0.15,  // plague probability
-        0.7    // resource abundance
-    ))
-    .withSimulationRules(new SimulationRules(
-        "adaptive",
-        true,
-        42L,    // seed
-        100,    // Monte Carlo runs
-        8       // threads
-    ))
-    .build();
-```
-
-### Running a Simulation
-
-```java
-SimulationEngine engine = new SimulationEngine(scenario, 12345L);
-SimulationResult result = engine.run(0);
-
-System.out.println("Final population: " + result.finalState().population().population());
-System.out.println("Total events: " + result.events().size());
-```
+![Simulation Results](docs/screenshots/simulation-results.png)
 
 ### Monte Carlo Analysis
 
-```java
-MonteCarloRunner runner = new MonteCarloRunner(scenario);
-List<SimulationResult> results = runner.runAll();
+Run 2-200 simulations with statistical analysis across all runs:
 
-MonteCarloAnalysis analysis = MonteCarloRunner.analyze(results);
-System.out.println(analysis);
-// Output:
-// Monte Carlo Analysis (50 runs):
-//   Average Population: 12,345,678
-//   Average Wealth: 98,765,432
-//   Average Techs Unlocked: 17.4
-//   Survival Rate: 94.0%
+![Monte Carlo](docs/screenshots/monte-carlo.png)
+
+## Architecture
+
+Pure-function simulation: `(state, seed) → (newState, events)`. No mutation, no side effects.
+
+```
+src/main/java/org/flossware/civilization/
+├── model/              # Immutable state records (Java records)
+│   ├── CivilizationState   # Top-level state aggregate
+│   ├── PopulationState     # Births, deaths, growth rate
+│   ├── EconomyState        # Wealth, GDP, trade routes
+│   ├── TechnologyState     # Unlocked techs, literacy
+│   ├── ClimateState        # Temperature anomaly, resources
+│   ├── PoliticsState       # Stability, rebellion, succession
+│   ├── MilitaryState       # Army, wars, defense
+│   ├── ReligionState       # Religion shares, unity
+│   └── TechGraph           # DAG with cycle detection
+├── module/             # Stateless tick functions
+│   ├── PopulationModule    # Growth, plague, carrying capacity
+│   ├── EconomyModule       # Production, trade, taxation
+│   ├── TechnologyModule    # Research, diffusion, unlocks
+│   ├── ClimateModule       # Temperature, disasters, resources
+│   ├── PoliticsModule      # Mean-reverting stability, war exhaustion
+│   ├── MilitaryModule      # War probability, army scaling
+│   └── ReligionModule      # Spread, conversion, schisms
+├── engine/             # Simulation execution
+│   ├── SimulationEngine    # Variable-tick loop (1-10 year ticks)
+│   ├── MonteCarloRunner    # Parallel execution with ExecutorService
+│   ├── TickType            # Adaptive time steps based on volatility
+│   └── SeedManager         # Hierarchical deterministic seeding
+├── scenarios/
+│   └── RomeEnduresScenario # "What if Rome never fell?" (27 BCE → 2026 CE)
+└── web/
+    └── WebServer           # REST API + static file server
 ```
 
-## Technology Tree Format
+### Deterministic Seeding
 
-Technologies form a Directed Acyclic Graph (DAG) with automatic cycle detection:
+Every random decision derives from a hierarchical seed chain:
 
-```java
-new Technology(
-    "steamEngine",              // ID
-    "industrial",               // Era
-    List.of("metallurgy_advanced", "coalMining"),  // Prerequisites
-    300,                        // Research cost
-    0.05                        // Diffusion rate
-)
+```
+baseSeed → runSeed(runIndex) → yearSeed(year, tickType) → moduleSeed(module)
 ```
 
-**Validation Rules**:
-- No cycles (detected via DFS with path tracking)
-- All prerequisites must exist
-- Max depth < 20
-- Research cost > 0
-- Diffusion rate ∈ [0, 1]
+Same seed = identical results across runs, threads, and platforms.
 
-## Module Details
+### Variable Tick Rate
 
-### Population Module
+The engine adapts its time step based on current conditions:
 
-Logistic growth model with carrying capacity:
+| Condition | Tick Size | When |
+|-----------|-----------|------|
+| Crisis | 1 year | Stability < 0.3 or climate volatility > 0.7 |
+| Normal | 5 years | Default |
+| Stable | 10 years | Stability > 0.8 and low volatility |
+
+## REST API
+
 ```
-dP/dt = r * P * (1 - P/K)
-
-where:
-  P = population
-  K = carrying capacity (resource-dependent)
-  r = growth rate
-```
-
-Features:
-- Births, deaths, plague dynamics
-- Carrying capacity limits (no infinite growth)
-- Malthusian collapse when resources deplete
-
-### Economy Module
-
-```java
-productivity = baseProductivity * techMultiplier(unlockedTechs)
-production = workers * productivity * resourceAbundance
-consumption = population * perCapitaConsumption
-wealthDelta = (production - consumption) * (1 + tradeSurplus * 0.2)
-GDP = production * averagePriceLevel
+POST /api/simulate      {"seed": 42}                    → simulation results + snapshots
+POST /api/monte-carlo   {"numRuns": 50, "baseSeed": 42} → statistical analysis + per-run data
+GET  /api/health                                        → {"status": "ok"}
 ```
 
-Events:
-- Economic boom (wealth +50%)
-- Economic collapse (wealth -30%)
+## Default Scenario: Rome Endures
 
-### Politics Module
+The built-in scenario starts at 27 BCE with the Roman Empire and simulates through 2026 CE:
 
-```java
-stability = baseStability
-          + economicHealth * 0.4
-          + religiousUnity * 0.3
-          - warExhaustion * 0.3
-          - random * volatility
-```
+- **Population**: 56M initial, logistic growth with plague and famine
+- **Economy**: 1B denarii starting wealth, trade route expansion
+- **Technology**: 20-node tech tree (Agriculture → Spaceflight) with prerequisite DAG
+- **Climate**: Volcanic eruptions, temperature anomalies, resource impacts
+- **Politics**: Mean-reverting stability, rebellion at <20%, succession crises
+- **Military**: War probability tied to economy and politics
+- **Religion**: Roman Polytheism start, conversion mechanics, schisms
 
-Events:
-- Rebellion (stability < 0.2)
-- Succession crisis (ruler age > 70)
-
-### Climate Module
-
-Multi-dimensional random walk:
-- Temperature anomaly (°C from baseline)
-- Drought index (0 = flood, 1 = severe drought)
-- Storm frequency (major storms per year)
-- Sea level rise (cumulative mm)
-
-Volatility controls step size per year.
-
-## Testing
+## Tests
 
 ```bash
 mvn test
 ```
 
-**Test Coverage:**
-- Reproducibility (same seed → same output)
-- Performance benchmarks
-- Tech tree validation (cycle detection)
-- Module correctness
-- Monte Carlo isolation
+87 tests covering all simulation modules, tech tree validation, reproducibility, and performance.
 
-## Design Principles
+## Tech Stack
 
-1. **Pure Functions**: Every module is side-effect-free
-2. **Reproducibility**: Hierarchical seed management guarantees determinism
-3. **Performance First**: Sub-millisecond ticks, parallel by design
-4. **Explicit Over Implicit**: No black boxes, every formula documented
-5. **Fail Fast**: Invalid input → immediate error, not hallucinated correction
-
-## Extensibility
-
-### Adding a New Module
-
-1. Create pure function: `ModuleResult<StateT> tick(StateT state, params, SplittableRandom random)`
-2. Add to `SimulationEngine.executeTick()` in correct order
-3. Update `CivilizationState` with new state field
-4. Write tests
-
-### Adding a New Technology
-
-```java
-new Technology(
-    "quantum_computing",
-    "future",
-    List.of("computing", "materials_science"),
-    1000,
-    0.01
-)
-```
-
-Technology effects are implemented in module logic (e.g., `EconomyModule.calculateTechMultiplier`).
-
-## Performance Tuning
-
-### Faster Simulations
-- Use `DECADE` time step for stable scenarios
-- Reduce Monte Carlo runs
-- Increase parallel threads (up to CPU cores)
-
-### Memory Optimization
-- Event filtering (severity threshold)
-- Diff chain storage (enabled by default)
-- Narrative pruning (5% deviation threshold)
-
-## Roadmap
-
-- [ ] JSON scenario import/export
-- [ ] LLM-based scenario compiler (natural language → JSON)
-- [ ] Branching timeline storage
-- [ ] Narrative generation with configurable granularity
-- [ ] Web UI for scenario configuration
-- [ ] Additional modules: diplomacy, culture, trade networks
-- [ ] GPU acceleration for massive Monte Carlo runs
-
-## Versioning & Releases
-
-This project uses **X.Y versioning**:
-- **X (major)**: Incompatible API changes, major feature additions
-- **Y (minor)**: Backwards-compatible features, bug fixes
-
-### Automated Release Process
-
-1. **Version Bump** (Manual Trigger):
-   - Go to Actions → "Version Bump" workflow
-   - Select major or minor bump
-   - Workflow updates version in all files and creates tag
-
-2. **Release** (Automatic on Tag Push):
-   - Triggered when `v*.*` tag is pushed
-   - Builds, tests, and packages JAR
-   - Creates GitHub Release with artifacts
-   - Deploys to PackageCloud.io
-
-### CI/CD
-
-- **CI**: Runs on every push/PR to `main`
-- **Release**: Triggered by version tags (`v1.0`, `v2.0`, etc.)
-
-### Package Distribution
-
-Releases are available via:
-- **GitHub Releases**: https://github.com/FlossWare/civilization-simulator-java/releases
-- **PackageCloud.io**: https://packagecloud.io/FlossWare/civilization-simulator
-
-## Mobile Apps
-
-Native Android and iOS apps are available! See [MOBILE_APPS.md](MOBILE_APPS.md) for:
-- Download links (APK/IPA)
-- Installation instructions
-- Performance benchmarks
-- Kotlin Multiplatform Mobile architecture
-
-**Source code**: `mobile/` directory in this repository
-
-## Contributing
-
-See [CONTRIBUTING.md](CONTRIBUTING.md)
+- Java 21 (records, sealed classes)
+- Jackson 2.18 (JSON serialization)
+- `com.sun.net.httpserver` (zero-dependency web server)
+- Chart.js 4.4 (frontend visualization)
+- JUnit 5 (testing)
+- Maven (build)
 
 ## License
 
-GPL-3.0 License - see [LICENSE](LICENSE)
-
-## Citation
-
-```bibtex
-@software{civilization_simulator,
-  title = {Alternate History Civilization Simulator},
-  author = {FlossWare},
-  year = {2026},
-  version = {1.0},
-  url = {https://github.com/FlossWare/civilization-simulator-java}
-}
-```
-
-## References
-
-- Logistic population model: Verhulst (1838)
-- Technology diffusion: Rogers (2003)
-- Historical simulation: Turchin (2003) - Cliodynamics
-- Monte Carlo methods: Metropolis & Ulam (1949)
-
----
-
-**Built with Java 21, Maven, and pure functional design.**
+GPL-3.0
