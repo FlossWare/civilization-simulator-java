@@ -85,7 +85,12 @@ public final class WebServer {
                 if (!body.isBlank()) {
                     ObjectNode reqNode = (ObjectNode) mapper.readTree(body);
                     if (reqNode.has("seed") && !reqNode.get("seed").isNull()) {
-                        seed = reqNode.get("seed").asLong();
+                        try {
+                            seed = Long.parseLong(reqNode.get("seed").asText());
+                        } catch (NumberFormatException e) {
+                            sendError(exchange, 400, "Invalid seed: must be a valid integer");
+                            return;
+                        }
                     }
                 }
 
@@ -123,9 +128,18 @@ public final class WebServer {
                     ObjectNode reqNode = (ObjectNode) mapper.readTree(body);
                     if (reqNode.has("numRuns") && !reqNode.get("numRuns").isNull()) {
                         numRuns = reqNode.get("numRuns").asInt();
+                        if (numRuns < 1 || numRuns > 200) {
+                            sendError(exchange, 400, "numRuns must be between 1 and 200");
+                            return;
+                        }
                     }
                     if (reqNode.has("baseSeed") && !reqNode.get("baseSeed").isNull()) {
-                        baseSeed = reqNode.get("baseSeed").asLong();
+                        try {
+                            baseSeed = Long.parseLong(reqNode.get("baseSeed").asText());
+                        } catch (NumberFormatException e) {
+                            sendError(exchange, 400, "Invalid baseSeed: must be a valid integer");
+                            return;
+                        }
                     }
                 }
 
