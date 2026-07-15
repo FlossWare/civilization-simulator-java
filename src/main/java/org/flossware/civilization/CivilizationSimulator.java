@@ -4,7 +4,7 @@ import org.flossware.civilization.engine.MonteCarloRunner;
 import org.flossware.civilization.engine.SimulationEngine;
 import org.flossware.civilization.engine.SimulationResult;
 import org.flossware.civilization.model.Scenario;
-import org.flossware.civilization.scenarios.RomeEnduresScenario;
+import org.flossware.civilization.scenarios.ScenarioRegistry;
 import org.flossware.civilization.web.WebServer;
 
 import java.util.List;
@@ -43,12 +43,21 @@ public class CivilizationSimulator {
             return;
         }
 
+        // Parse --scenario flag
+        String scenarioId = "rome";
+        for (int i = 1; i < args.length - 1; i++) {
+            if ("--scenario".equals(args[i])) {
+                scenarioId = args[i + 1];
+                i++;
+            }
+        }
+
         System.out.println("=".repeat(80));
         System.out.println("Alternate History Civilization Simulator v1.1");
         System.out.println("=".repeat(80));
         System.out.println();
 
-        Scenario scenario = RomeEnduresScenario.create();
+        Scenario scenario = ScenarioRegistry.getOrDefault(scenarioId);
         System.out.println("Scenario: " + scenario.name());
         System.out.println("Description: " + scenario.description());
         System.out.println("Time range: " + scenario.startYear() + " to " + scenario.endYear());
@@ -63,7 +72,7 @@ public class CivilizationSimulator {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: java -jar civilization-simulator-java-1.9.jar <command>");
+        System.out.println("Usage: java -jar civilization-simulator-java-1.9.jar <command> [options]");
         System.out.println();
         System.out.println("Commands:");
         System.out.println("  single      Run a single simulation");
@@ -72,9 +81,15 @@ public class CivilizationSimulator {
         System.out.println("  server      Start the web UI server (port 8080 by default)");
         System.out.println("  help        Show this help message");
         System.out.println();
+        System.out.println("Options:");
+        System.out.println("  --scenario <id>  Select scenario (default: rome)");
+        System.out.println();
+        System.out.println("Available scenarios: " + ScenarioRegistry.availableIds());
+        System.out.println();
         System.out.println("Examples:");
         System.out.println("  java -jar civilization-simulator-java-1.9.jar single");
-        System.out.println("  java -jar civilization-simulator-java-1.9.jar monte");
+        System.out.println("  java -jar civilization-simulator-java-1.9.jar single --scenario ming");
+        System.out.println("  java -jar civilization-simulator-java-1.9.jar monte --scenario british");
         System.out.println("  java -jar civilization-simulator-java-1.9.jar server");
         System.out.println("  java -jar civilization-simulator-java-1.9.jar server --port 9090 --static-dir web-ui/static");
         System.out.println("  java -jar civilization-simulator-java-1.9.jar server --cors-origin https://example.com");

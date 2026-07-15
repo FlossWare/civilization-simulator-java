@@ -12,7 +12,7 @@ import org.flossware.civilization.engine.SimulationEngine;
 import org.flossware.civilization.engine.SimulationResult;
 import org.flossware.civilization.model.Scenario;
 import org.flossware.civilization.model.SimulationRules;
-import org.flossware.civilization.scenarios.RomeEnduresScenario;
+import org.flossware.civilization.scenarios.ScenarioRegistry;
 
 import java.io.IOException;
 import java.io.InputStream;
@@ -53,6 +53,7 @@ public final class WebServer {
         server = HttpServer.create(new InetSocketAddress(port), 0);
 
         server.createContext("/api/health", new HealthHandler());
+        server.createContext("/api/scenarios", new ScenariosHandler());
         server.createContext("/api/simulate", new SimulateHandler());
         server.createContext("/api/monte-carlo", new MonteCarloHandler());
         server.createContext("/", new StaticFileHandler(staticDir));
@@ -80,6 +81,14 @@ public final class WebServer {
         }
     }
 
+    private class ScenariosHandler implements HttpHandler {
+        @Override
+        public void handle(HttpExchange exchange) throws IOException {
+            if (handleCors(exchange)) return;
+            sendJson(exchange, 200, mapper.valueToTree(ScenarioRegistry.listAll()));
+        }
+    }
+
     private class SimulateHandler implements HttpHandler {
         @Override
         public void handle(HttpExchange exchange) throws IOException {
@@ -88,6 +97,7 @@ public final class WebServer {
             try {
                 String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
                 long seed = 12345L;
+                String scenarioId = null;
                 if (!body.isBlank()) {
                     ObjectNode reqNode = (ObjectNode) mapper.readTree(body);
                     if (reqNode.has("seed") && !reqNode.get("seed").isNull()) {
@@ -98,9 +108,19 @@ public final class WebServer {
                             return;
                         }
                     }
+                    if (reqNode.has("scenario") && !reqNode.get("scenario").isNull()) {
+                        scenarioId = reqNode.get("scenario").asText();
+                    }
                 }
 
-                Scenario scenario = RomeEnduresScenario.create();
+                Scenario scenario;
+                try {
+                    scenario = ScenarioRegistry.getOrDefault(scenarioId);
+                } catch (IllegalArgumentException e) {
+                    sendError(exchange, 400, e.getMessage());
+                    return;
+                }
+
                 long startTime = System.nanoTime();
                 SimulationEngine engine = new SimulationEngine(scenario, seed);
                 SimulationResult result = engine.runWithSnapshots(0, 50);
@@ -113,6 +133,7 @@ public final class WebServer {
                 response.put("durationMs", durationMs);
                 response.put("techTreeSize", scenario.techTree().size());
                 response.put("seed", seed);
+                response.put("scenarioId", scenarioId != null ? scenarioId : "rome");
 
                 sendJson(exchange, 200, response);
             } catch (Exception e) {
@@ -130,6 +151,7 @@ public final class WebServer {
                 String body = new String(exchange.getRequestBody().readAllBytes(), StandardCharsets.UTF_8);
                 int numRuns = 50;
                 long baseSeed = 12345L;
+                String scenarioId = null;
                 if (!body.isBlank()) {
                     ObjectNode reqNode = (ObjectNode) mapper.readTree(body);
                     if (reqNode.has("numRuns") && !reqNode.get("numRuns").isNull()) {
@@ -147,9 +169,18 @@ public final class WebServer {
                             return;
                         }
                     }
+                    if (reqNode.has("scenario") && !reqNode.get("scenario").isNull()) {
+                        scenarioId = reqNode.get("scenario").asText();
+                    }
                 }
 
-                Scenario baseScenario = RomeEnduresScenario.create();
+                Scenario baseScenario;
+                try {
+                    baseScenario = ScenarioRegistry.getOrDefault(scenarioId);
+                } catch (IllegalArgumentException e) {
+                    sendError(exchange, 400, e.getMessage());
+                    return;
+                }
                 SimulationRules originalRules = baseScenario.simulationRules();
                 SimulationRules newRules = new SimulationRules(
                     originalRules.timeStep(),
@@ -210,6 +241,7 @@ public final class WebServer {
                 response.set("runs", runsArray);
                 response.put("totalDurationMs", totalDurationMs);
                 response.put("techTreeSize", scenario.techTree().size());
+                response.put("scenarioId", scenarioId != null ? scenarioId : "rome");
 
                 sendJson(exchange, 200, response);
             } catch (Exception e) {
