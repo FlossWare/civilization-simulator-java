@@ -79,6 +79,11 @@
                 baseSeed: baseSeed
             };
 
+            var scenarioSelect = document.getElementById('scenarioSelect');
+            if (scenarioSelect && scenarioSelect.value) {
+                body.scenario = scenarioSelect.value;
+            }
+
             progressFill.style.width = '50%';
             progressText.textContent = 'Running ' + numRuns + ' simulations on server...';
 
@@ -311,5 +316,11 @@
         }
         return shortNum(lo) + '-' + shortNum(hi);
     }
+
+    // ---------------------------------------------------------------
+    // Initialise scenario dropdown
+    // ---------------------------------------------------------------
+
+    CivSim.initScenarioDropdown('scenarioSelect');
 
 })();

@@ -63,6 +63,45 @@ var CivSim = (function () {
     }
 
     // ---------------------------------------------------------------
+    // Scenario dropdown
+    // ---------------------------------------------------------------
+
+    /**
+     * Populates a <select> element with scenarios fetched from the backend.
+     * Falls back to a single "Rome Survives to Modern Era" option on error.
+     *
+     * @param {string} selectId  the id attribute of the <select> element
+     */
+    function initScenarioDropdown(selectId) {
+        var select = document.getElementById(selectId);
+        if (!select) { return; }
+
+        fetch('/api/scenarios')
+            .then(function (response) {
+                if (!response.ok) {
+                    throw new Error('Failed to fetch scenarios');
+                }
+                return response.json();
+            })
+            .then(function (scenarios) {
+                scenarios.forEach(function (scenario) {
+                    var option = document.createElement('option');
+                    option.value = scenario.id;
+                    option.textContent = scenario.name + ' (' +
+                        formatYear(scenario.startYear) + ' – ' +
+                        formatYear(scenario.endYear) + ')';
+                    select.appendChild(option);
+                });
+            })
+            .catch(function () {
+                var option = document.createElement('option');
+                option.value = 'rome';
+                option.textContent = 'Rome Survives to Modern Era';
+                select.appendChild(option);
+            });
+    }
+
+    // ---------------------------------------------------------------
     // Public API
     // ---------------------------------------------------------------
 
@@ -70,7 +109,8 @@ var CivSim = (function () {
         formatNumber: formatNumber,
         formatDecimal: formatDecimal,
         formatYear: formatYear,
-        formatPercent: formatPercent
+        formatPercent: formatPercent,
+        initScenarioDropdown: initScenarioDropdown
     };
 
 })();

@@ -214,6 +214,22 @@ header .version {
     color: var(--color-text-muted);
 }
 
+/* --- Scenario Dropdown --- */
+.scenario-dropdown {
+    appearance: none;
+    -webkit-appearance: none;
+    -moz-appearance: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%238b8fa8' stroke-width='1.5' fill='none'/%3E%3C/svg%3E");
+    background-repeat: no-repeat;
+    background-position: right 0.75rem center;
+    padding-right: 2rem;
+    cursor: pointer;
+}
+
+.scenario-dropdown:hover {
+    border-color: var(--color-primary);
+}
+
 /* --- Scenario Preview --- */
 .scenario-preview {
     background-color: var(--color-surface);
@@ -228,7 +244,48 @@ header .version {
     margin-bottom: 0.5rem;
 }
 
+.scenario-preview > p {
+    color: var(--color-text-muted);
+    margin-bottom: 1.25rem;
+}
+
 .scenario-preview em {
+    color: var(--color-text-muted);
+}
+
+.scenario-list {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    gap: 1rem;
+}
+
+.scenario-card {
+    background-color: var(--color-surface-raised);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    padding: 1rem 1.25rem;
+    transition: border-color var(--transition);
+}
+
+.scenario-card:hover {
+    border-color: var(--color-primary);
+}
+
+.scenario-card h4 {
+    font-size: 0.95rem;
+    margin-bottom: 0.25rem;
+    color: var(--color-text);
+}
+
+.scenario-card .scenario-era {
+    font-size: 0.8rem;
+    color: var(--color-primary);
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+
+.scenario-card .scenario-desc {
+    font-size: 0.8rem;
     color: var(--color-text-muted);
 }
 

@@ -61,6 +61,11 @@
                 body.seed = parseInt(seedValue, 10);
             }
 
+            var scenarioSelect = document.getElementById('scenarioSelect');
+            if (scenarioSelect && scenarioSelect.value) {
+                body.scenario = scenarioSelect.value;
+            }
+
             var response = await fetch('/api/simulate', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -285,5 +290,11 @@
         div.appendChild(document.createTextNode(text));
         return div.innerHTML;
     }
+
+    // ---------------------------------------------------------------
+    // Initialise scenario dropdown
+    // ---------------------------------------------------------------
+
+    CivSim.initScenarioDropdown('scenarioSelect');
 
 })();

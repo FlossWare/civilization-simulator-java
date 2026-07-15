@@ -17,6 +17,11 @@
         <div class="simulation-controls">
             <h2>⚙️ Configuration</h2>
             <div class="form-group">
+                <label for="scenarioSelect">Scenario:</label>
+                <select id="scenarioSelect" class="scenario-dropdown"></select>
+                <p class="help-text">Choose a historical what-if scenario</p>
+            </div>
+            <div class="form-group">
                 <label for="seed">Random Seed (optional):</label>
                 <input type="number" id="seed" placeholder="Leave empty for random seed">
                 <p class="help-text">Same seed = same results (reproducibility)</p>
