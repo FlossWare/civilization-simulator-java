@@ -109,7 +109,8 @@ public final class IncaScenario {
             politics,
             military,
             climate,
-            religion
+            religion,
+            new RandomEventState(Integer.MIN_VALUE)
         );
     }
 
@@ -119,7 +120,8 @@ public final class IncaScenario {
             0.40,
             0.35,
             0.012,
-            0.65
+            0.65,
+            1.0
         );
     }
 

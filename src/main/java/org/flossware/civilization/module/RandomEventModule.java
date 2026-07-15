@@ -42,7 +42,7 @@ public final class RandomEventModule implements SimulationModule {
         }
 
         int currentYear = state.year();
-        if (currentYear - state.randomEvent().lastEventYear() < COOLDOWN_YEARS) {
+        if ((long) currentYear - (long) state.randomEvent().lastEventYear() < COOLDOWN_YEARS) {
             return new ModuleResult<>(state, List.of());
         }
 

@@ -115,7 +115,8 @@ public final class BritishEmpireScenario {
             politics,
             military,
             climate,
-            religion
+            religion,
+            new RandomEventState(Integer.MIN_VALUE)
         );
     }
 
@@ -125,7 +126,8 @@ public final class BritishEmpireScenario {
             0.45,
             0.25,
             0.01,
-            0.7
+            0.7,
+            1.0
         );
     }
 

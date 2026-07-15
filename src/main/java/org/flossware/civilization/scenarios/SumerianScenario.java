@@ -109,7 +109,8 @@ public final class SumerianScenario {
             politics,
             military,
             climate,
-            religion
+            religion,
+            new RandomEventState(Integer.MIN_VALUE)
         );
     }
 
@@ -119,7 +120,8 @@ public final class SumerianScenario {
             0.55,
             0.4,
             0.02,
-            0.7
+            0.7,
+            1.0
         );
     }
 

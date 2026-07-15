@@ -113,7 +113,8 @@ public final class MingDynastyScenario {
             politics,
             military,
             climate,
-            religion
+            religion,
+            new RandomEventState(Integer.MIN_VALUE)
         );
     }
 
@@ -123,7 +124,8 @@ public final class MingDynastyScenario {
             0.35,
             0.35,
             0.015,
-            0.75
+            0.75,
+            1.0
         );
     }
 

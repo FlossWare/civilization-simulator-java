@@ -110,7 +110,8 @@ public final class CarolingianScenario {
             politics,
             military,
             climate,
-            religion
+            religion,
+            new RandomEventState(Integer.MIN_VALUE)
         );
     }
 
@@ -120,7 +121,8 @@ public final class CarolingianScenario {
             0.50,
             0.3,
             0.018,
-            0.6
+            0.6,
+            1.0
         );
     }
 
