@@ -181,4 +181,32 @@ class PopulationModuleTest {
         assertFalse(hasMilestone,
             "No milestone event when population was already above 10M");
     }
+
+    @Test
+    void zeroResourceAbundanceProducesNoNaN() {
+        PopulationState state = new PopulationState(1_000_000, 0.03, 0.02, 50_000_000, false);
+        SplittableRandom random = new SplittableRandom(42);
+
+        ModuleResult<PopulationState> result = PopulationModule.tick(state, 0.0, 0.0, random);
+
+        assertFalse(Double.isNaN(result.state().carryingCapacity()),
+            "Carrying capacity must not be NaN when resource abundance is zero");
+        assertTrue(result.state().population() > 0,
+            "Population must remain positive when resource abundance is zero");
+        assertFalse(Double.isNaN(result.state().birthRate()),
+            "Birth rate must not be NaN when resource abundance is zero");
+    }
+
+    @Test
+    void negativeResourceAbundanceProducesNoNaN() {
+        PopulationState state = new PopulationState(1_000_000, 0.03, 0.02, 50_000_000, false);
+        SplittableRandom random = new SplittableRandom(42);
+
+        ModuleResult<PopulationState> result = PopulationModule.tick(state, -1.0, 0.0, random);
+
+        assertFalse(Double.isNaN(result.state().carryingCapacity()),
+            "Carrying capacity must not be NaN when resource abundance is negative");
+        assertTrue(result.state().population() > 0,
+            "Population must remain positive when resource abundance is negative");
+    }
 }
