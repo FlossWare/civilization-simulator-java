@@ -77,11 +77,13 @@ public class CivilizationSimulator {
         System.out.println("  java -jar civilization-simulator-java-1.9.jar monte");
         System.out.println("  java -jar civilization-simulator-java-1.9.jar server");
         System.out.println("  java -jar civilization-simulator-java-1.9.jar server --port 9090 --static-dir web-ui/static");
+        System.out.println("  java -jar civilization-simulator-java-1.9.jar server --cors-origin https://example.com");
     }
 
     private static void startWebServer(String[] args) throws Exception {
         int port = 8080;
         String staticDir = "web-ui/static";
+        String corsOrigin = "*";
 
         for (int i = 1; i < args.length - 1; i++) {
             if ("--port".equals(args[i])) {
@@ -90,10 +92,13 @@ public class CivilizationSimulator {
             } else if ("--static-dir".equals(args[i])) {
                 staticDir = args[i + 1];
                 i++;
+            } else if ("--cors-origin".equals(args[i])) {
+                corsOrigin = args[i + 1];
+                i++;
             }
         }
 
-        WebServer server = new WebServer(port, staticDir);
+        WebServer server = new WebServer(port, staticDir, corsOrigin);
         server.start();
     }
 

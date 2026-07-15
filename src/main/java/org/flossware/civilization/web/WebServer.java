@@ -33,12 +33,18 @@ public final class WebServer {
 
     private final int port;
     private final String staticDir;
+    private final String corsOrigin;
     private final ObjectMapper mapper;
     private HttpServer server;
 
     public WebServer(int port, String staticDir) {
+        this(port, staticDir, "*");
+    }
+
+    public WebServer(int port, String staticDir, String corsOrigin) {
         this.port = port;
         this.staticDir = staticDir;
+        this.corsOrigin = corsOrigin;
         this.mapper = new ObjectMapper();
         this.mapper.configure(DeserializationFeature.FAIL_ON_UNKNOWN_PROPERTIES, false);
     }
@@ -298,7 +304,7 @@ public final class WebServer {
     }
 
     private boolean handleCors(HttpExchange exchange) throws IOException {
-        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", "*");
+        exchange.getResponseHeaders().set("Access-Control-Allow-Origin", corsOrigin);
         exchange.getResponseHeaders().set("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
         exchange.getResponseHeaders().set("Access-Control-Allow-Headers", "Content-Type");
 
