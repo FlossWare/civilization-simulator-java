@@ -142,7 +142,7 @@ public final class EconomyModule {
         if (unlockedTechs.contains("machinery")) {
             multiplier *= 1.2;
         }
-        if (unlockedTechs.contains("steam_power")) {
+        if (unlockedTechs.contains("steam_engine")) {
             multiplier *= 1.4;
         }
         if (unlockedTechs.contains("industrialization")) {

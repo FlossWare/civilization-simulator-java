@@ -39,7 +39,6 @@ public final class SimulationEngine {
      * @return Final state and complete event log
      */
     public SimulationResult run(int runIndex) {
-        SplittableRandom runRandom = seedManager.getRunRandom(runIndex);
         CivilizationState state = scenario.initialState();
         List<Event> allEvents = new ArrayList<>();
 
@@ -51,10 +50,10 @@ public final class SimulationEngine {
                 state.politics().stability()
             );
 
-            SplittableRandom yearRandom = seedManager.getYearRandom(runRandom, currentYear, tickType.name());
+            long yearSeed = seedManager.getYearSeed(runIndex, currentYear, tickType.name());
 
             // Execute all modules in sequence
-            TickResult tickResult = executeTick(state, currentYear, tickType, yearRandom);
+            TickResult tickResult = executeTick(state, currentYear, tickType, yearSeed);
             state = tickResult.state();
 
             // Add year to all events
@@ -72,18 +71,79 @@ public final class SimulationEngine {
     }
 
     /**
+     * Runs the complete simulation with periodic snapshots for charting.
+     *
+     * @param runIndex         Monte Carlo run index for seed isolation
+     * @param snapshotInterval How many years between snapshots
+     * @return Final state, event log, and periodic snapshots
+     */
+    public SimulationResult runWithSnapshots(int runIndex, int snapshotInterval) {
+        CivilizationState state = scenario.initialState();
+        List<Event> allEvents = new ArrayList<>();
+        List<SimulationSnapshot> snapshots = new ArrayList<>();
+
+        int currentYear = scenario.startYear();
+        int nextSnapshot = currentYear;
+
+        while (currentYear <= scenario.endYear()) {
+            TickType tickType = TickType.determineTickType(
+                scenario.worldConstraints().climateVolatility(),
+                state.politics().stability()
+            );
+
+            long yearSeed = seedManager.getYearSeed(runIndex, currentYear, tickType.name());
+            TickResult tickResult = executeTick(state, currentYear, tickType, yearSeed);
+            state = tickResult.state();
+
+            final int eventYear = currentYear;
+            final String civId = state.id();
+            List<Event> yearEvents = tickResult.events().stream()
+                .map(e -> new Event(eventYear, civId, e.type(), e.severity(), e.description(), e.data()))
+                .toList();
+            allEvents.addAll(yearEvents);
+
+            if (currentYear >= nextSnapshot) {
+                snapshots.add(new SimulationSnapshot(
+                    currentYear,
+                    state.population().population(),
+                    state.economy().wealth(),
+                    state.economy().gdp(),
+                    state.technology().unlockedTechs().size(),
+                    state.politics().stability(),
+                    state.technology().literacyRate()
+                ));
+                nextSnapshot += snapshotInterval;
+            }
+
+            currentYear += (int) Math.ceil(tickType.getYears());
+        }
+
+        snapshots.add(new SimulationSnapshot(
+            state.year(),
+            state.population().population(),
+            state.economy().wealth(),
+            state.economy().gdp(),
+            state.technology().unlockedTechs().size(),
+            state.politics().stability(),
+            state.technology().literacyRate()
+        ));
+
+        return new SimulationResult(state, allEvents, snapshots);
+    }
+
+    /**
      * Executes one simulation tick with all modules.
      */
     private TickResult executeTick(
         CivilizationState state,
         int year,
         TickType tickType,
-        SplittableRandom yearRandom
+        long yearSeed
     ) {
         List<Event> events = new ArrayList<>();
 
         // 1. Climate Module
-        var climateRandom = SeedManager.getModuleRandom(yearRandom, "climate");
+        var climateRandom = SeedManager.getModuleRandom(yearSeed, "climate");
         var climateResult = ClimateModule.tick(
             state.climate(),
             scenario.worldConstraints().climateVolatility(),
@@ -96,7 +156,7 @@ public final class SimulationEngine {
         // Would go here
 
         // 3. Population Module
-        var popRandom = SeedManager.getModuleRandom(yearRandom, "population");
+        var popRandom = SeedManager.getModuleRandom(yearSeed, "population");
         var popResult = PopulationModule.tick(
             state.population(),
             state.climate().getResourceAbundance(),
@@ -107,7 +167,7 @@ public final class SimulationEngine {
         events.addAll(popResult.events());
 
         // 4. Economy Module
-        var econRandom = SeedManager.getModuleRandom(yearRandom, "economy");
+        var econRandom = SeedManager.getModuleRandom(yearSeed, "economy");
         var econResult = EconomyModule.tick(
             state.economy(),
             state.climate().getResourceAbundance(),
@@ -119,7 +179,7 @@ public final class SimulationEngine {
         events.addAll(econResult.events());
 
         // 5. Technology Module
-        var techRandom = SeedManager.getModuleRandom(yearRandom, "technology");
+        var techRandom = SeedManager.getModuleRandom(yearSeed, "technology");
         var techResult = TechnologyModule.tick(
             state.technology(),
             techGraph,
@@ -131,7 +191,7 @@ public final class SimulationEngine {
         events.addAll(techResult.events());
 
         // 6. Religion Module
-        var relRandom = SeedManager.getModuleRandom(yearRandom, "religion");
+        var relRandom = SeedManager.getModuleRandom(yearSeed, "religion");
         var relResult = ReligionModule.tick(
             state.religion(),
             calculateTradeConnectivity(state),
@@ -141,7 +201,7 @@ public final class SimulationEngine {
         events.addAll(relResult.events());
 
         // 7. Politics Module
-        var polRandom = SeedManager.getModuleRandom(yearRandom, "politics");
+        var polRandom = SeedManager.getModuleRandom(yearSeed, "politics");
         var polResult = PoliticsModule.tick(
             state.politics(),
             calculateEconomicHealth(state),
@@ -154,7 +214,7 @@ public final class SimulationEngine {
         events.addAll(polResult.events());
 
         // 8. Military Module
-        var milRandom = SeedManager.getModuleRandom(yearRandom, "military");
+        var milRandom = SeedManager.getModuleRandom(yearSeed, "military");
         var milResult = MilitaryModule.tick(
             state.military(),
             state.economy().wealth(),

@@ -4,7 +4,8 @@ import org.flossware.civilization.engine.MonteCarloRunner;
 import org.flossware.civilization.engine.SimulationEngine;
 import org.flossware.civilization.engine.SimulationResult;
 import org.flossware.civilization.model.Scenario;
-import org.flossware.civilization.scenarios.RomeEnuresScenario;
+import org.flossware.civilization.scenarios.RomeEnduresScenario;
+import org.flossware.civilization.web.WebServer;
 
 import java.util.List;
 
@@ -30,11 +31,16 @@ public class CivilizationSimulator {
         String mode = args[0];
 
         // Validate command
-        if (!"single".equals(mode) && !"monte".equals(mode) && !"montecarlo".equals(mode)) {
+        if (!"single".equals(mode) && !"monte".equals(mode) && !"montecarlo".equals(mode) && !"server".equals(mode)) {
             System.err.println("Error: Unknown command '" + mode + "'");
             System.err.println();
             printUsage();
             System.exit(1);
+        }
+
+        if ("server".equals(mode)) {
+            startWebServer(args);
+            return;
         }
 
         System.out.println("=".repeat(80));
@@ -42,7 +48,7 @@ public class CivilizationSimulator {
         System.out.println("=".repeat(80));
         System.out.println();
 
-        Scenario scenario = RomeEnuresScenario.create();
+        Scenario scenario = RomeEnduresScenario.create();
         System.out.println("Scenario: " + scenario.name());
         System.out.println("Description: " + scenario.description());
         System.out.println("Time range: " + scenario.startYear() + " to " + scenario.endYear());
@@ -57,17 +63,38 @@ public class CivilizationSimulator {
     }
 
     private static void printUsage() {
-        System.out.println("Usage: java -jar civilization-simulator-java-1.1.jar <command>");
+        System.out.println("Usage: java -jar civilization-simulator-java-1.9.jar <command>");
         System.out.println();
         System.out.println("Commands:");
         System.out.println("  single      Run a single simulation");
         System.out.println("  monte       Run Monte Carlo analysis (50 runs)");
         System.out.println("  montecarlo  Alias for 'monte'");
+        System.out.println("  server      Start the web UI server (port 8080 by default)");
         System.out.println("  help        Show this help message");
         System.out.println();
         System.out.println("Examples:");
-        System.out.println("  java -jar civilization-simulator-java-1.1.jar single");
-        System.out.println("  java -jar civilization-simulator-java-1.1.jar monte");
+        System.out.println("  java -jar civilization-simulator-java-1.9.jar single");
+        System.out.println("  java -jar civilization-simulator-java-1.9.jar monte");
+        System.out.println("  java -jar civilization-simulator-java-1.9.jar server");
+        System.out.println("  java -jar civilization-simulator-java-1.9.jar server --port 9090 --static-dir web-ui/static");
+    }
+
+    private static void startWebServer(String[] args) throws Exception {
+        int port = 8080;
+        String staticDir = "web-ui/static";
+
+        for (int i = 1; i < args.length - 1; i++) {
+            if ("--port".equals(args[i])) {
+                port = Integer.parseInt(args[i + 1]);
+                i++;
+            } else if ("--static-dir".equals(args[i])) {
+                staticDir = args[i + 1];
+                i++;
+            }
+        }
+
+        WebServer server = new WebServer(port, staticDir);
+        server.start();
     }
 
     private static void runSingleSimulation(Scenario scenario) {

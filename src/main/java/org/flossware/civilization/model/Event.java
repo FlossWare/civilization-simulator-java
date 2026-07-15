@@ -20,6 +20,8 @@ public record Event(
         WAR_ENDED,
         REBELLION,
         SUCCESSION_CRISIS,
+        SUCCESSION_RESOLVED,
+        RULER_DEATH,
         PLAGUE,
         CLIMATE_DISASTER,
         RELIGIOUS_SCHISM,

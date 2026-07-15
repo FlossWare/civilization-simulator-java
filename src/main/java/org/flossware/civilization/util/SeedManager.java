@@ -29,17 +29,33 @@ public final class SeedManager {
     }
 
     /**
-     * Derives a year-specific random generator.
+     * Computes a deterministic year-level seed from the base seed, run index,
+     * year, and tick type. This seed is independent of iteration order.
      */
-    public SplittableRandom getYearRandom(SplittableRandom runRandom, int year, String tickType) {
-        return runRandom.split();
+    public long getYearSeed(int runIndex, int year, String tickType) {
+        long runSeed = hash(baseSeed, runIndex);
+        long yearSeed = hash(runSeed, year);
+        yearSeed = hash(yearSeed, tickType);
+        return yearSeed;
+    }
+
+    /**
+     * Derives a year-specific random generator.
+     * Deterministic: same (baseSeed, runIndex, year, tickType) always
+     * produces the same generator, regardless of call order.
+     */
+    public SplittableRandom getYearRandom(int runIndex, int year, String tickType) {
+        return new SplittableRandom(getYearSeed(runIndex, year, tickType));
     }
 
     /**
      * Derives a module-specific random generator to prevent correlation artifacts.
+     * Deterministic: same (yearSeed, moduleName) always produces the same
+     * generator, regardless of call order.
      */
-    public static SplittableRandom getModuleRandom(SplittableRandom yearRandom, String moduleName) {
-        return yearRandom.split();
+    public static SplittableRandom getModuleRandom(long yearSeed, String moduleName) {
+        long moduleSeed = hash(yearSeed, moduleName);
+        return new SplittableRandom(moduleSeed);
     }
 
     /**

@@ -3,8 +3,8 @@
  *
  * Depends on: main.js (CivSim namespace), Chart.js (loaded via CDN in simulator.html).
  *
- * Wires up the "Run Simulation" button, executes the simulation using
- * CivSim.runSimulation(), and renders results including:
+ * Wires up the "Run Simulation" button, calls the backend /api/simulate
+ * endpoint, and renders results including:
  *   - Performance statistics
  *   - Final civilization state metrics
  *   - Population over time chart
@@ -46,61 +46,72 @@
         runBtn.disabled = true;
         loadingEl.style.display = 'block';
         resultsEl.style.display = 'none';
-
-        // Use requestAnimationFrame so the loading spinner appears before we block
-        requestAnimationFrame(function () {
-            setTimeout(function () {
-                try {
-                    executeSimulation();
-                } finally {
-                    loadingEl.style.display = 'none';
-                    runBtn.disabled = false;
-                }
-            }, 50);
-        });
+        executeSimulation();
     });
 
     // ---------------------------------------------------------------
-    // Simulation execution
+    // Simulation execution (calls backend API)
     // ---------------------------------------------------------------
 
-    function executeSimulation() {
-        var scenario = CivSim.createRomeScenario();
-        var seedValue = seedInput.value.trim();
-        var seed = seedValue ? parseInt(seedValue, 10) : Math.floor(Math.random() * 2147483647);
+    async function executeSimulation() {
+        try {
+            var seedValue = seedInput.value.trim();
+            var body = {};
+            if (seedValue) {
+                body.seed = parseInt(seedValue, 10);
+            }
 
-        // If the user did not enter a seed, show the one we used
-        if (!seedValue) {
-            seedInput.value = seed;
+            var response = await fetch('/api/simulate', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
+            });
+
+            if (!response.ok) {
+                throw new Error('Simulation failed: ' + response.statusText);
+            }
+
+            var result = await response.json();
+
+            // If user didn't enter a seed, show what backend used
+            if (!seedValue && result.seed != null) {
+                seedInput.value = result.seed;
+            }
+
+            var totalYears = result.snapshots.length > 1
+                ? result.snapshots[result.snapshots.length - 1].year - result.snapshots[0].year
+                : 2053;
+
+            renderPerformance(result.durationMs, totalYears, result.events.length);
+            renderFinalState(result.finalState, result.techTreeSize);
+            renderPopulationChart(result.snapshots);
+            renderEconomyChart(result.snapshots);
+            renderTimeline(result.events);
+
+            resultsEl.style.display = 'block';
+        } catch (error) {
+            alert('Error: ' + error.message);
+        } finally {
+            loadingEl.style.display = 'none';
+            runBtn.disabled = false;
         }
-
-        var result = CivSim.runSimulation(scenario, seed);
-
-        renderPerformance(result, scenario);
-        renderFinalState(result.finalState);
-        renderPopulationChart(result.snapshots);
-        renderEconomyChart(result.snapshots);
-        renderTimeline(result.events);
-
-        resultsEl.style.display = 'block';
     }
 
     // ---------------------------------------------------------------
     // Renderers
     // ---------------------------------------------------------------
 
-    function renderPerformance(result, scenario) {
-        var totalYears = scenario.endYear - scenario.startYear;
-        durationEl.textContent = result.durationMs.toFixed(1) + ' ms';
-        yearsPerMsEl.textContent = (totalYears / result.durationMs).toFixed(0) + ' years/ms';
-        eventCountEl.textContent = result.events.length;
+    function renderPerformance(durationMs, totalYears, eventCount) {
+        durationEl.textContent = durationMs.toFixed(1) + ' ms';
+        yearsPerMsEl.textContent = (totalYears / durationMs).toFixed(0) + ' years/ms';
+        eventCountEl.textContent = eventCount;
     }
 
-    function renderFinalState(state) {
+    function renderFinalState(state, techTreeSize) {
         var metrics = [
             { label: 'Population',     value: CivSim.formatNumber(state.population.population),        detail: 'Carrying capacity: ' + CivSim.formatNumber(Math.floor(state.population.carryingCapacity)) },
             { label: 'Wealth',         value: CivSim.formatNumber(Math.floor(state.economy.wealth)),   detail: 'GDP: ' + CivSim.formatNumber(Math.floor(state.economy.gdp)) },
-            { label: 'Technologies',   value: state.technology.unlockedTechs.length + ' / ' + CivSim.TECH_TREE.length, detail: 'Literacy: ' + CivSim.formatPercent(state.technology.literacyRate) },
+            { label: 'Technologies',   value: state.technology.unlockedTechs.length + ' / ' + techTreeSize, detail: 'Literacy: ' + CivSim.formatPercent(state.technology.literacyRate) },
             { label: 'Stability',      value: CivSim.formatPercent(state.politics.stability),          detail: 'Government: ' + state.politics.government },
             { label: 'Army Size',      value: CivSim.formatNumber(state.military.armySize),            detail: 'Navy: ' + CivSim.formatNumber(state.military.navySize) },
             { label: 'Trade Routes',   value: state.economy.tradeRoutes.length,                        detail: 'Trade surplus: ' + CivSim.formatDecimal(state.economy.tradeSurplus, 2) },

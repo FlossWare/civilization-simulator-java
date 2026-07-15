@@ -3,7 +3,7 @@ package org.flossware.civilization;
 import org.flossware.civilization.engine.SimulationEngine;
 import org.flossware.civilization.engine.SimulationResult;
 import org.flossware.civilization.model.Scenario;
-import org.flossware.civilization.scenarios.RomeEnuresScenario;
+import org.flossware.civilization.scenarios.RomeEnduresScenario;
 import org.junit.jupiter.api.Test;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -16,7 +16,7 @@ class ReproducibilityTest {
 
     @Test
     void testSameSeedProducesSameResults() {
-        Scenario scenario = RomeEnuresScenario.create();
+        Scenario scenario = RomeEnduresScenario.create();
         long seed = 42L;
 
         SimulationEngine engine1 = new SimulationEngine(scenario, seed);
@@ -46,7 +46,7 @@ class ReproducibilityTest {
 
     @Test
     void testDifferentSeedsProduceDifferentResults() {
-        Scenario scenario = RomeEnuresScenario.create();
+        Scenario scenario = RomeEnduresScenario.create();
 
         SimulationEngine engine1 = new SimulationEngine(scenario, 42L);
         SimulationResult result1 = engine1.run(0);
@@ -68,7 +68,7 @@ class ReproducibilityTest {
 
     @Test
     void testMonteCarloRunsAreIsolated() {
-        Scenario scenario = RomeEnuresScenario.create();
+        Scenario scenario = RomeEnduresScenario.create();
         long seed = 12345L;
 
         SimulationEngine engine = new SimulationEngine(scenario, seed);

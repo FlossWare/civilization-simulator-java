@@ -11,7 +11,7 @@ import java.util.*;
  * This scenario injects modern technology into a classical Roman starting point
  * and simulates the path from -27 BCE to 2026 CE.
  */
-public final class RomeEnuresScenario {
+public final class RomeEnduresScenario {
 
     /**
      * Creates the complete Rome Endures scenario.
@@ -54,7 +54,7 @@ public final class RomeEnuresScenario {
         );
 
         Set<String> initialTechs = new HashSet<>(Arrays.asList(
-            "agriculture", "mining", "ironWorking", "metallurgy_advanced"
+            "agriculture", "mining", "iron_working", "metallurgy_advanced"
         ));
 
         TechnologyState technology = new TechnologyState(
@@ -127,19 +127,19 @@ public final class RomeEnuresScenario {
             new Technology("mining", "neolithic", List.of(), 50, 0.1),
 
             // Classical era
-            new Technology("ironWorking", "classical", List.of("mining"), 100, 0.08),
-            new Technology("metallurgy_advanced", "classical", List.of("ironWorking"), 150, 0.06),
+            new Technology("iron_working", "classical", List.of("mining"), 100, 0.08),
+            new Technology("metallurgy_advanced", "classical", List.of("iron_working"), 150, 0.06),
             new Technology("magnetism", "classical", List.of(), 60, 0.1),
-            new Technology("copperSmelting", "classical", List.of("mining"), 80, 0.09),
+            new Technology("copper_smelting", "classical", List.of("mining"), 80, 0.09),
 
             // Medieval era
-            new Technology("coalMining", "medieval", List.of("mining"), 120, 0.07),
+            new Technology("coal_mining", "medieval", List.of("mining"), 120, 0.07),
             new Technology("chemistry_basic", "medieval", List.of(), 80, 0.09),
 
             // Industrial era
-            new Technology("steamEngine", "industrial", List.of("metallurgy_advanced", "coalMining"), 300, 0.05),
-            new Technology("combustion", "industrial", List.of("steamEngine", "chemistry_basic"), 250, 0.05),
-            new Technology("electricity", "industrial", List.of("magnetism", "copperSmelting"), 350, 0.04),
+            new Technology("steam_engine", "industrial", List.of("metallurgy_advanced", "coal_mining"), 300, 0.05),
+            new Technology("combustion", "industrial", List.of("steam_engine", "chemistry_basic"), 250, 0.05),
+            new Technology("electricity", "industrial", List.of("magnetism", "copper_smelting"), 350, 0.04),
 
             // Modern era
             new Technology("materials_science", "modern", List.of("metallurgy_advanced"), 400, 0.03),

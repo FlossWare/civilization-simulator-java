@@ -21,6 +21,13 @@ public final class PoliticsModule {
     private static final int SUCCESSION_AGE_THRESHOLD = 70;
     private static final double SUCCESSION_PROBABILITY = 0.2;
     private static final int RULER_AGE_INCREMENT = 1;
+    private static final double RULER_DEATH_BASE_PROBABILITY = 0.02;
+    private static final int RULER_DEATH_AGE_THRESHOLD = 50;
+    private static final double RULER_DEATH_MAX_PROBABILITY = 0.5;
+    private static final double SUCCESSION_RESOLVE_PROBABILITY = 0.2;
+    private static final int NEW_RULER_MIN_AGE = 25;
+    private static final int NEW_RULER_MAX_AGE = 45;
+    private static final double STABILITY_BLEND_RATE = 0.15;
 
     /**
      * Ticks politics forward by one time step.
@@ -59,14 +66,13 @@ public final class PoliticsModule {
         // Calculate volatility component (random factor)
         double volatility = current.inRebellion() ? 0.3 : 0.1;
 
-        // Calculate new stability
-        // stability = baseStability + economicHealth*0.4 + religiousUnity*0.3 - warExhaustion*0.3 - random*volatility
-        double newStability = baseStability
-            + (economicHealth * 0.4)
-            + (religiousUnity * 0.3)
-            - (warExhaustion * 0.3)
-            - (random.nextDouble() * volatility);
-
+        // Calculate target stability from current conditions (mean-reverting)
+        double targetStability = economicHealth * 0.4 + religiousUnity * 0.3 + 0.3;
+        // Blend toward target (mean-reverting)
+        double newStability = baseStability + (targetStability - baseStability) * STABILITY_BLEND_RATE;
+        // Apply penalties
+        newStability -= warExhaustion * 0.1;
+        newStability -= random.nextDouble() * volatility;
         // Clamp stability to [0, 1]
         newStability = Math.max(0.0, Math.min(1.0, newStability));
 
@@ -86,14 +92,43 @@ public final class PoliticsModule {
             rebellion = false;
         }
 
-        // Check for succession crisis
+        // Check for ruler death (age > 50: increasing probability)
         boolean successionCrisis = current.inSuccessionCrisis();
-        if (newRulerAge > SUCCESSION_AGE_THRESHOLD && random.nextDouble() < SUCCESSION_PROBABILITY) {
+        boolean rulerDied = false;
+        if (newRulerAge > RULER_DEATH_AGE_THRESHOLD) {
+            double deathProbability = RULER_DEATH_BASE_PROBABILITY
+                * (newRulerAge - RULER_DEATH_AGE_THRESHOLD) / 20.0;
+            deathProbability = Math.min(RULER_DEATH_MAX_PROBABILITY, deathProbability);
+            if (random.nextDouble() < deathProbability) {
+                rulerDied = true;
+                events.add(new Event(year, "", EventType.RULER_DEATH, EventSeverity.CRITICAL,
+                    "The ruler has died at age " + newRulerAge + "!", newRulerAge));
+                if (!successionCrisis) {
+                    successionCrisis = true;
+                    events.add(new Event(year, "", EventType.SUCCESSION_CRISIS, EventSeverity.MAJOR,
+                        "Succession crisis triggered by the ruler's death!", newRulerAge));
+                }
+            }
+        }
+
+        // Check for succession crisis from old age (existing mechanic)
+        if (!rulerDied && newRulerAge > SUCCESSION_AGE_THRESHOLD
+                && random.nextDouble() < SUCCESSION_PROBABILITY) {
             if (!successionCrisis) {
                 successionCrisis = true;
                 events.add(new Event(year, "", EventType.SUCCESSION_CRISIS, EventSeverity.MAJOR,
                     "Succession crisis emerges as the ruler ages!", newRulerAge));
             }
+        }
+
+        // Resolve succession crisis: 20% chance per year, new ruler age 25-45
+        if (successionCrisis && random.nextDouble() < SUCCESSION_RESOLVE_PROBABILITY) {
+            successionCrisis = false;
+            newRulerAge = NEW_RULER_MIN_AGE
+                + random.nextInt(NEW_RULER_MAX_AGE - NEW_RULER_MIN_AGE + 1);
+            events.add(new Event(year, "", EventType.SUCCESSION_RESOLVED, EventSeverity.MAJOR,
+                "Succession crisis resolved! New ruler ascends at age " + newRulerAge + ".",
+                newRulerAge));
         }
 
         // Build new state

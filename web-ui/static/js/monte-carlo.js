@@ -3,7 +3,8 @@
  *
  * Depends on: main.js (CivSim namespace), Chart.js (loaded via CDN in monte-carlo.html).
  *
- * Runs N simulations with different seeds, collects statistics, and renders:
+ * Calls the backend /api/monte-carlo endpoint to run N simulations with
+ * different seeds, then renders:
  *   - Summary statistics (avg population, avg wealth, avg techs, survival rate)
  *   - Population distribution histogram
  *   - Technology distribution histogram
@@ -43,7 +44,7 @@
     // Chart instances
     var popHistChart    = null;
     var techHistChart   = null;
-    var wealthBarChart  = null;
+    var wealthBarChartInst = null;
 
     // ---------------------------------------------------------------
     // Event handling
@@ -54,114 +55,81 @@
         loadingEl.style.display = 'block';
         resultsEl.style.display = 'none';
         progressFill.style.width = '0%';
-        progressText.textContent = 'Starting...';
+        progressText.textContent = 'Waiting for server...';
 
-        // Use setTimeout to let the UI update before blocking the main thread
-        setTimeout(function () {
-            try {
-                executeMonteCarloAnalysis();
-            } finally {
-                runBtn.disabled = false;
-            }
-        }, 50);
+        executeMonteCarloAnalysis();
     });
 
     // ---------------------------------------------------------------
-    // Monte Carlo execution
+    // Monte Carlo execution (calls backend API)
     // ---------------------------------------------------------------
 
-    function executeMonteCarloAnalysis() {
-        var scenario = CivSim.createRomeScenario();
-        var numRuns = parseInt(numRunsInput.value, 10) || 50;
-        numRuns = Math.max(2, Math.min(200, numRuns));
-        numRunsInput.value = numRuns;
+    async function executeMonteCarloAnalysis() {
+        try {
+            var numRuns = parseInt(numRunsInput.value, 10) || 50;
+            numRuns = Math.max(2, Math.min(200, numRuns));
+            numRunsInput.value = numRuns;
 
-        var baseSeedValue = baseSeedInput.value.trim();
-        var baseSeed = baseSeedValue ? parseInt(baseSeedValue, 10) : 12345;
-        if (!baseSeedValue) { baseSeedInput.value = baseSeed; }
+            var baseSeedValue = baseSeedInput.value.trim();
+            var baseSeed = baseSeedValue ? parseInt(baseSeedValue, 10) : 12345;
+            if (!baseSeedValue) { baseSeedInput.value = baseSeed; }
 
-        var results = [];
-        var overallStart = performance.now();
+            var body = {
+                numRuns: numRuns,
+                baseSeed: baseSeed
+            };
 
-        for (var i = 0; i < numRuns; i++) {
-            // Each run uses a different seed derived from the base seed + run index
-            var runSeed = baseSeed + i * 7919; // Use a prime multiplier for spread
-            var result = CivSim.runSimulation(scenario, runSeed);
-            results.push({
-                runIndex: i,
-                seed: runSeed,
-                finalState: result.finalState,
-                events: result.events,
-                snapshots: result.snapshots,
-                durationMs: result.durationMs
+            progressFill.style.width = '50%';
+            progressText.textContent = 'Running ' + numRuns + ' simulations on server...';
+
+            var response = await fetch('/api/monte-carlo', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(body)
             });
 
-            // Update progress
-            var pct = ((i + 1) / numRuns * 100);
-            progressFill.style.width = pct + '%';
-            progressText.textContent = 'Run ' + (i + 1) + ' / ' + numRuns + ' completed';
+            if (!response.ok) {
+                throw new Error('Monte Carlo analysis failed: ' + response.statusText);
+            }
+
+            var data = await response.json();
+
+            progressFill.style.width = '100%';
+            progressText.textContent = 'All ' + numRuns + ' runs completed';
+
+            // Render results
+            renderSummary(data.analysis, data.totalDurationMs, data.techTreeSize);
+            renderPopulationHistogram(data.runs);
+            renderTechHistogram(data.runs, data.techTreeSize);
+            renderWealthBarChart(data.runs);
+            renderRunsTable(data.runs);
+
+            loadingEl.style.display = 'none';
+            resultsEl.style.display = 'block';
+        } catch (error) {
+            alert('Error: ' + error.message);
+            loadingEl.style.display = 'none';
+        } finally {
+            runBtn.disabled = false;
         }
-
-        var totalDurationMs = performance.now() - overallStart;
-
-        // Analyze
-        var analysis = analyzeResults(results);
-
-        // Render
-        renderSummary(analysis, totalDurationMs);
-        renderPopulationHistogram(results);
-        renderTechHistogram(results);
-        renderWealthBarChart(results);
-        renderRunsTable(results);
-
-        loadingEl.style.display = 'none';
-        resultsEl.style.display = 'block';
-    }
-
-    // ---------------------------------------------------------------
-    // Analysis  (mirrors MonteCarloRunner.analyze)
-    // ---------------------------------------------------------------
-
-    function analyzeResults(results) {
-        var populations = results.map(function (r) { return r.finalState.population.population; });
-        var wealths     = results.map(function (r) { return r.finalState.economy.wealth; });
-        var techs       = results.map(function (r) { return r.finalState.technology.unlockedTechs.length; });
-
-        var avgPop    = populations.reduce(function (a, b) { return a + b; }, 0) / populations.length;
-        var avgWealth = wealths.reduce(function (a, b) { return a + b; }, 0) / wealths.length;
-        var avgTechs  = techs.reduce(function (a, b) { return a + b; }, 0) / techs.length;
-
-        var survivedCount = populations.filter(function (p) { return p > 10000; }).length;
-        var survivalRate  = survivedCount / populations.length;
-
-        return {
-            totalRuns: results.length,
-            avgPopulation: avgPop,
-            avgWealth: avgWealth,
-            avgTechs: avgTechs,
-            survivalRate: survivalRate,
-            populations: populations,
-            wealths: wealths,
-            techs: techs
-        };
     }
 
     // ---------------------------------------------------------------
     // Renderers
     // ---------------------------------------------------------------
 
-    function renderSummary(analysis, totalDurationMs) {
+    function renderSummary(analysis, totalDurationMs, techTreeSize) {
         avgPopEl.textContent      = CivSim.formatNumber(Math.floor(analysis.avgPopulation));
         avgWealthEl.textContent   = CivSim.formatNumber(Math.floor(analysis.avgWealth));
-        avgTechsEl.textContent    = analysis.avgTechs.toFixed(1) + ' / ' + CivSim.TECH_TREE.length;
+        avgTechsEl.textContent    = analysis.avgTechs.toFixed(1) + ' / ' + techTreeSize;
         survivalRateEl.textContent = CivSim.formatPercent(analysis.survivalRate);
         totalDurationEl.textContent = totalDurationMs.toFixed(0) + ' ms (' + analysis.totalRuns + ' runs)';
     }
 
-    function renderPopulationHistogram(results) {
+    function renderPopulationHistogram(runs) {
         if (popHistChart) { popHistChart.destroy(); }
 
-        var populations = results.map(function (r) { return r.finalState.population.population; });
+        var populations = runs.map(function (r) { return r.population; });
         var histogram = buildHistogram(populations, 10);
 
         popHistChart = new Chart(popHistCanvas.getContext('2d'), {
@@ -197,11 +165,11 @@
         });
     }
 
-    function renderTechHistogram(results) {
+    function renderTechHistogram(runs, techTreeSize) {
         if (techHistChart) { techHistChart.destroy(); }
 
-        var techs = results.map(function (r) { return r.finalState.technology.unlockedTechs.length; });
-        var histogram = buildHistogram(techs, Math.min(10, CivSim.TECH_TREE.length));
+        var techs = runs.map(function (r) { return r.techCount; });
+        var histogram = buildHistogram(techs, Math.min(10, techTreeSize));
 
         techHistChart = new Chart(techHistCanvas.getContext('2d'), {
             type: 'bar',
@@ -235,22 +203,22 @@
         });
     }
 
-    function renderWealthBarChart(results) {
-        if (wealthBarChart) { wealthBarChart.destroy(); }
+    function renderWealthBarChart(runs) {
+        if (wealthBarChartInst) { wealthBarChartInst.destroy(); }
 
         // Sort by wealth descending and show top 20
-        var sorted = results.slice().sort(function (a, b) {
-            return b.finalState.economy.wealth - a.finalState.economy.wealth;
+        var sorted = runs.slice().sort(function (a, b) {
+            return b.wealth - a.wealth;
         });
         var top = sorted.slice(0, Math.min(20, sorted.length));
 
-        wealthBarChart = new Chart(wealthBarCanvas.getContext('2d'), {
+        wealthBarChartInst = new Chart(wealthBarCanvas.getContext('2d'), {
             type: 'bar',
             data: {
                 labels: top.map(function (r) { return 'Run #' + r.runIndex; }),
                 datasets: [{
                     label: 'Final Wealth',
-                    data: top.map(function (r) { return r.finalState.economy.wealth; }),
+                    data: top.map(function (r) { return r.wealth; }),
                     backgroundColor: 'rgba(255,213,79,0.6)',
                     borderColor: '#ffd54f',
                     borderWidth: 1
@@ -283,20 +251,19 @@
         });
     }
 
-    function renderRunsTable(results) {
+    function renderRunsTable(runs) {
         runsTableBody.innerHTML = '';
 
-        results.forEach(function (r) {
-            var state = r.finalState;
+        runs.forEach(function (r) {
             var tr = document.createElement('tr');
             tr.innerHTML =
                 '<td>#' + r.runIndex + '</td>' +
                 '<td>' + r.seed + '</td>' +
-                '<td>' + CivSim.formatNumber(state.population.population) + '</td>' +
-                '<td>' + CivSim.formatNumber(Math.floor(state.economy.wealth)) + '</td>' +
-                '<td>' + state.technology.unlockedTechs.length + '</td>' +
-                '<td>' + CivSim.formatPercent(state.politics.stability) + '</td>' +
-                '<td>' + r.events.length + '</td>' +
+                '<td>' + CivSim.formatNumber(r.population) + '</td>' +
+                '<td>' + CivSim.formatNumber(Math.floor(r.wealth)) + '</td>' +
+                '<td>' + r.techCount + '</td>' +
+                '<td>' + CivSim.formatPercent(r.stability) + '</td>' +
+                '<td>' + r.eventCount + '</td>' +
                 '<td>' + r.durationMs.toFixed(1) + ' ms</td>';
             runsTableBody.appendChild(tr);
         });

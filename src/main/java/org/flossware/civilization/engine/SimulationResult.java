@@ -10,9 +10,15 @@ import java.util.List;
  */
 public record SimulationResult(
     CivilizationState finalState,
-    List<Event> events
+    List<Event> events,
+    List<SimulationSnapshot> snapshots
 ) {
     public SimulationResult {
         events = List.copyOf(events);
+        snapshots = List.copyOf(snapshots);
+    }
+
+    public SimulationResult(CivilizationState finalState, List<Event> events) {
+        this(finalState, events, List.of());
     }
 }

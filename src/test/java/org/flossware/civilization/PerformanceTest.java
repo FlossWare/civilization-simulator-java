@@ -4,7 +4,7 @@ import org.flossware.civilization.engine.MonteCarloRunner;
 import org.flossware.civilization.engine.SimulationEngine;
 import org.flossware.civilization.engine.SimulationResult;
 import org.flossware.civilization.model.Scenario;
-import org.flossware.civilization.scenarios.RomeEnuresScenario;
+import org.flossware.civilization.scenarios.RomeEnduresScenario;
 import org.junit.jupiter.api.Test;
 
 import java.util.List;
@@ -23,7 +23,7 @@ class PerformanceTest {
 
     @Test
     void testSingleRunPerformance() {
-        Scenario scenario = RomeEnuresScenario.create();
+        Scenario scenario = RomeEnduresScenario.create();
         SimulationEngine engine = new SimulationEngine(scenario, 12345L);
 
         long startTime = System.nanoTime();
@@ -50,7 +50,7 @@ class PerformanceTest {
 
     @Test
     void testMonteCarloPerformance() throws Exception {
-        Scenario scenario = RomeEnuresScenario.create();
+        Scenario scenario = RomeEnduresScenario.create();
 
         // Reduce to 10 runs for faster testing
         Scenario testScenario = new org.flossware.civilization.util.ScenarioBuilder()
@@ -97,7 +97,7 @@ class PerformanceTest {
 
     @Test
     void testMemoryEfficiency() throws Exception {
-        Scenario scenario = RomeEnuresScenario.create();
+        Scenario scenario = RomeEnduresScenario.create();
 
         // Reduce runs for memory testing
         Scenario testScenario = new org.flossware.civilization.util.ScenarioBuilder()
