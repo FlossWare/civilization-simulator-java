@@ -64,6 +64,9 @@ public final class PopulationModule {
         // Apply delta
         long newPopulation = Math.max(1000, current.population() + (long)(births - deaths));
 
+        // Guard against long overflow in extended simulations (#37)
+        newPopulation = Math.min(newPopulation, Long.MAX_VALUE / 2);
+
         // Population milestones
         if (newPopulation >= 10_000_000 && current.population() < 10_000_000) {
             events.add(new Event(year, "", EventType.POPULATION_MILESTONE, EventSeverity.MAJOR,

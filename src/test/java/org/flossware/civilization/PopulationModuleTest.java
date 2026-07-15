@@ -154,6 +154,21 @@ class PopulationModuleTest {
     }
 
     @Test
+    void populationDoesNotOverflowWithLargeValues() {
+        // Start with a very large population to verify overflow protection (#37)
+        long largePopulation = Long.MAX_VALUE / 4;
+        PopulationState state = new PopulationState(largePopulation, 0.03, 0.02, 50_000_000, false);
+        SplittableRandom random = new SplittableRandom(42);
+
+        ModuleResult<PopulationState> result = PopulationModule.tick(state, 1.5, 0.0, random);
+
+        assertTrue(result.state().population() > 0,
+            "Population must remain positive (no overflow to negative)");
+        assertTrue(result.state().population() <= Long.MAX_VALUE / 2,
+            "Population must be clamped to Long.MAX_VALUE/2");
+    }
+
+    @Test
     void noMilestoneWhenAlreadyAbove10Million() {
         // Start above 10M -- no milestone should fire
         PopulationState state = new PopulationState(15_000_000, 0.03, 0.02, 50_000_000, false);
