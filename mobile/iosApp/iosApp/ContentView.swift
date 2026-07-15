@@ -8,11 +8,26 @@ struct ContentView: View {
         NavigationView {
             ScrollView {
                 VStack(alignment: .leading, spacing: 12) {
-                    Text("Rome Survives to Modern Era")
-                        .font(.title2)
-                    Text("What if the Western Roman Empire endured through history?")
-                        .font(.body)
-                        .foregroundColor(.secondary)
+                    Picker("Scenario", selection: $viewModel.selectedScenarioId) {
+                        ForEach(viewModel.availableScenarios, id: \.id) { info in
+                            Text(info.name).tag(info.id)
+                        }
+                    }
+                    .pickerStyle(.menu)
+                    .onChange(of: viewModel.selectedScenarioId) { newValue in
+                        viewModel.selectScenario(newValue)
+                    }
+
+                    if let info = viewModel.selectedScenarioInfo {
+                        Text(info.name)
+                            .font(.title2)
+                        Text(info.description_)
+                            .font(.body)
+                            .foregroundColor(.secondary)
+                        Text("\(info.startYear) – \(info.endYear)")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                    }
 
                     HStack(spacing: 8) {
                         Button("Run Single") { viewModel.runSingle() }

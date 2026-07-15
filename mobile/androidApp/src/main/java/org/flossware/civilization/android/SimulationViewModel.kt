@@ -8,11 +8,13 @@ import kotlinx.coroutines.launch
 import org.flossware.civilization.engine.MonteCarloRunner
 import org.flossware.civilization.engine.SimulationEngine
 import org.flossware.civilization.engine.SimulationResult
-import org.flossware.civilization.scenarios.RomeEnduresScenario
+import org.flossware.civilization.scenarios.ScenarioRegistry
 
 data class SimulationUiState(
     val isRunning: Boolean = false,
     val mode: String = "single",
+    val selectedScenarioId: String = "rome",
+    val availableScenarios: List<ScenarioRegistry.ScenarioInfo> = ScenarioRegistry.listAll(),
     val singleResult: SimulationResult? = null,
     val monteCarloResults: List<SimulationResult>? = null,
     val analysis: MonteCarloRunner.MonteCarloAnalysis? = null,
@@ -24,11 +26,20 @@ class SimulationViewModel : ViewModel() {
     private val _uiState = MutableStateFlow(SimulationUiState())
     val uiState: StateFlow<SimulationUiState> = _uiState
 
+    fun selectScenario(scenarioId: String) {
+        _uiState.value = _uiState.value.copy(
+            selectedScenarioId = scenarioId,
+            singleResult = null,
+            monteCarloResults = null,
+            analysis = null
+        )
+    }
+
     fun runSingle() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isRunning = true, mode = "single", error = null)
             try {
-                val scenario = RomeEnduresScenario.create()
+                val scenario = ScenarioRegistry.get(_uiState.value.selectedScenarioId)
                 val startTime = System.currentTimeMillis()
                 val engine = SimulationEngine(scenario, scenario.simulationRules.baseRandomSeed)
                 val result = engine.run(0)
@@ -49,7 +60,7 @@ class SimulationViewModel : ViewModel() {
         viewModelScope.launch {
             _uiState.value = _uiState.value.copy(isRunning = true, mode = "monte", error = null)
             try {
-                val scenario = RomeEnduresScenario.create()
+                val scenario = ScenarioRegistry.get(_uiState.value.selectedScenarioId)
                 val startTime = System.currentTimeMillis()
                 val runner = MonteCarloRunner(scenario)
                 val results = runner.runAll()

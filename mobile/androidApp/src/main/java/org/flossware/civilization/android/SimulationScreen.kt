@@ -28,9 +28,46 @@ fun SimulationScreen(viewModel: SimulationViewModel = viewModel()) {
                 .verticalScroll(rememberScrollState()),
             verticalArrangement = Arrangement.spacedBy(12.dp)
         ) {
-            Text("Rome Survives to Modern Era", style = MaterialTheme.typography.headlineSmall)
-            Text("What if the Western Roman Empire endured through history?",
-                style = MaterialTheme.typography.bodyMedium)
+            var scenarioExpanded by remember { mutableStateOf(false) }
+            val selectedInfo = uiState.availableScenarios.find { it.id == uiState.selectedScenarioId }
+
+            ExposedDropdownMenuBox(
+                expanded = scenarioExpanded,
+                onExpandedChange = { scenarioExpanded = it }
+            ) {
+                OutlinedTextField(
+                    value = selectedInfo?.name ?: "Select Scenario",
+                    onValueChange = {},
+                    readOnly = true,
+                    label = { Text("Scenario") },
+                    trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = scenarioExpanded) },
+                    modifier = Modifier.menuAnchor().fillMaxWidth()
+                )
+                ExposedDropdownMenu(
+                    expanded = scenarioExpanded,
+                    onDismissRequest = { scenarioExpanded = false }
+                ) {
+                    uiState.availableScenarios.forEach { info ->
+                        DropdownMenuItem(
+                            text = {
+                                Column {
+                                    Text(info.name, fontWeight = FontWeight.Medium)
+                                    Text("${info.startYear} – ${info.endYear}", style = MaterialTheme.typography.bodySmall)
+                                }
+                            },
+                            onClick = {
+                                viewModel.selectScenario(info.id)
+                                scenarioExpanded = false
+                            }
+                        )
+                    }
+                }
+            }
+
+            selectedInfo?.let { info ->
+                Text(info.name, style = MaterialTheme.typography.headlineSmall)
+                Text(info.description, style = MaterialTheme.typography.bodyMedium)
+            }
 
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 Button(onClick = { viewModel.runSingle() }, enabled = !uiState.isRunning) {
