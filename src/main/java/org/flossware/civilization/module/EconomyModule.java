@@ -25,6 +25,18 @@ public final class EconomyModule {
     private static final double COLLAPSE_THRESHOLD = -0.3;  // 30% decrease
     private static final double WORKFORCE_RATIO = 0.15;  // 15% of population as working-age adults
     private static final double WEALTH_PRODUCTIVITY_BONUS = 0.1;  // Bonus per 10M wealth (positive feedback)
+    private static final double WEALTH_SCALING_DIVISOR = 10_000_000.0;
+    private static final double MAX_WEALTH_BONUS = 1.0;
+    private static final double AGRICULTURE_BONUS = 1.2;
+    private static final double IRRIGATION_BONUS = 1.15;
+    private static final double BRONZE_WORKING_BONUS = 1.1;
+    private static final double IRON_WORKING_BONUS = 1.2;
+    private static final double CURRENCY_BONUS = 1.25;
+    private static final double ENGINEERING_BONUS = 1.15;
+    private static final double BANKING_BONUS = 1.3;
+    private static final double MACHINERY_BONUS = 1.2;
+    private static final double STEAM_ENGINE_BONUS = 1.4;
+    private static final double INDUSTRIALIZATION_BONUS = 1.5;
 
     /**
      * Ticks economy forward by one time step.
@@ -60,7 +72,7 @@ public final class EconomyModule {
 
         // Add wealth-based productivity bonus: richer economies are more efficient
         // For every 10M wealth, add 10% productivity bonus (max 2.0x at 100M+ wealth)
-        double wealthBonus = Math.min(1.0, (current.wealth() / 10_000_000.0) * WEALTH_PRODUCTIVITY_BONUS);
+        double wealthBonus = Math.min(MAX_WEALTH_BONUS, (current.wealth() / WEALTH_SCALING_DIVISOR) * WEALTH_PRODUCTIVITY_BONUS);
         productivity *= (1.0 + wealthBonus);
 
         // Production: workers * productivity * resource abundance
@@ -119,34 +131,34 @@ public final class EconomyModule {
 
         // Economic technology bonuses
         if (unlockedTechs.contains("agriculture")) {
-            multiplier *= 1.2;
+            multiplier *= AGRICULTURE_BONUS;
         }
         if (unlockedTechs.contains("irrigation")) {
-            multiplier *= 1.15;
+            multiplier *= IRRIGATION_BONUS;
         }
         if (unlockedTechs.contains("bronze_working")) {
-            multiplier *= 1.1;
+            multiplier *= BRONZE_WORKING_BONUS;
         }
         if (unlockedTechs.contains("iron_working")) {
-            multiplier *= 1.2;
+            multiplier *= IRON_WORKING_BONUS;
         }
         if (unlockedTechs.contains("currency")) {
-            multiplier *= 1.25;
+            multiplier *= CURRENCY_BONUS;
         }
         if (unlockedTechs.contains("engineering")) {
-            multiplier *= 1.15;
+            multiplier *= ENGINEERING_BONUS;
         }
         if (unlockedTechs.contains("banking")) {
-            multiplier *= 1.3;
+            multiplier *= BANKING_BONUS;
         }
         if (unlockedTechs.contains("machinery")) {
-            multiplier *= 1.2;
+            multiplier *= MACHINERY_BONUS;
         }
         if (unlockedTechs.contains("steam_engine")) {
-            multiplier *= 1.4;
+            multiplier *= STEAM_ENGINE_BONUS;
         }
         if (unlockedTechs.contains("industrialization")) {
-            multiplier *= 1.5;
+            multiplier *= INDUSTRIALIZATION_BONUS;
         }
 
         return multiplier;

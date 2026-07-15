@@ -21,6 +21,10 @@ public final class ReligionModule {
     private static final double SCHISM_THRESHOLD = 0.05;
     private static final double MINORITY_THRESHOLD = 0.2;
     private static final double UNITY_THRESHOLD = 0.6;
+    private static final double STABILITY_BONUS_RATE = 0.2;
+    private static final double TRADE_SPREAD_MODIFIER = 0.5;
+    private static final double BASE_SPLIT_RATIO = 0.6;
+    private static final double SPLIT_RATIO_RANDOMNESS = 0.2;
 
     /**
      * Ticks religion forward by one time step.
@@ -53,7 +57,7 @@ public final class ReligionModule {
             .orElse(0.0);
 
         // Calculate stability bonus
-        double stabilityBonus = unity * 0.2;
+        double stabilityBonus = unity * STABILITY_BONUS_RATE;
 
         // Check for schism
         boolean schismOccurred = checkForSchism(newShares, unity, random);
@@ -103,7 +107,7 @@ public final class ReligionModule {
         Map<String, Double> newShares = new HashMap<>(currentShares);
 
         // Trade increases religious exchange
-        double effectiveSpreadRate = spreadRate * (1.0 + tradeConnectivity * 0.5);
+        double effectiveSpreadRate = spreadRate * (1.0 + tradeConnectivity * TRADE_SPREAD_MODIFIER);
 
         // Apply small random fluctuations to each religion
         for (Map.Entry<String, Double> entry : currentShares.entrySet()) {
@@ -159,7 +163,7 @@ public final class ReligionModule {
             double originalShare = shares.get(largestReligion);
 
             // Split roughly 60/40 with some randomness
-            double splitRatio = 0.6 + (random.nextDouble() * 0.2 - 0.1); // 0.5 to 0.7
+            double splitRatio = BASE_SPLIT_RATIO + (random.nextDouble() * SPLIT_RATIO_RANDOMNESS - SPLIT_RATIO_RANDOMNESS / 2.0); // 0.5 to 0.7
             double mainShare = originalShare * splitRatio;
             double schismShare = originalShare * (1.0 - splitRatio);
 

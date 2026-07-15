@@ -14,6 +14,8 @@ public final class TechnologyModule {
 
     private static final double BASE_RESEARCH_POINTS = 10.0;
     private static final double UNIVERSITY_BONUS = 0.5;
+    private static final double MAX_POPULATION_FACTOR = 1.0;
+    private static final double POPULATION_SCALING_DIVISOR = 1_000_000.0;
 
     public static ModuleResult<TechnologyState> tick(
         TechnologyState current,
@@ -65,7 +67,7 @@ public final class TechnologyModule {
     private static double calculateResearchPoints(TechnologyState state, long population) {
         double literacyMultiplier = 1.0 + state.literacyRate();
         double universityMultiplier = 1.0 + (state.universities() * UNIVERSITY_BONUS);
-        double populationFactor = Math.min(1.0, population / 1_000_000.0);
+        double populationFactor = Math.min(MAX_POPULATION_FACTOR, population / POPULATION_SCALING_DIVISOR);
         return BASE_RESEARCH_POINTS * literacyMultiplier * universityMultiplier * populationFactor;
     }
 

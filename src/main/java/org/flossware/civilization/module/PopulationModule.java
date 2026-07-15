@@ -19,6 +19,11 @@ public final class PopulationModule {
     private static final double BASE_BIRTH_RATE = 0.03;
     private static final double BASE_DEATH_RATE = 0.02;
     private static final double PLAGUE_DEATH_MULTIPLIER = 3.0;
+    private static final double PLAGUE_END_PROBABILITY = 0.2;
+    private static final long MINIMUM_POPULATION = 1000;
+    private static final long POPULATION_MILESTONE_THRESHOLD = 10_000_000;
+    private static final double BASE_CARRYING_CAPACITY = 50_000_000;
+    private static final double MIN_RESOURCE_ABUNDANCE = 0.1;
 
     /**
      * Ticks population forward by one time step.
@@ -45,8 +50,8 @@ public final class PopulationModule {
                 "Plague outbreak!", null));
         }
 
-        // Plague ends after some time (20% chance per year)
-        if (plagueActive && random.nextDouble() < 0.2) {
+        // Plague ends after some time
+        if (plagueActive && random.nextDouble() < PLAGUE_END_PROBABILITY) {
             plagueActive = false;
         }
 
@@ -62,13 +67,13 @@ public final class PopulationModule {
         double deaths = current.population() * mortalityRate;
 
         // Apply delta
-        long newPopulation = Math.max(1000, current.population() + (long)(births - deaths));
+        long newPopulation = Math.max(MINIMUM_POPULATION, current.population() + (long)(births - deaths));
 
         // Guard against long overflow in extended simulations (#37)
         newPopulation = Math.min(newPopulation, Long.MAX_VALUE / 2);
 
         // Population milestones
-        if (newPopulation >= 10_000_000 && current.population() < 10_000_000) {
+        if (newPopulation >= POPULATION_MILESTONE_THRESHOLD && current.population() < POPULATION_MILESTONE_THRESHOLD) {
             events.add(new Event(year, "", EventType.POPULATION_MILESTONE, EventSeverity.MAJOR,
                 "Population reaches 10 million!", newPopulation));
         }
@@ -101,7 +106,6 @@ public final class PopulationModule {
      * Base capacity ~50M, scaled by resources.
      */
     private static double calculateCarryingCapacity(double resourceAbundance) {
-        double baseCapacity = 50_000_000;
-        return baseCapacity * Math.max(0.1, resourceAbundance);
+        return BASE_CARRYING_CAPACITY * Math.max(MIN_RESOURCE_ABUNDANCE, resourceAbundance);
     }
 }

@@ -21,6 +21,17 @@ public final class MilitaryModule {
     private static final double WAR_PROBABILITY = 0.05; // 5% per year
     private static final double BASE_TECH_ADVANTAGE = 1.0;
     private static final double TECH_ADVANTAGE_PER_MILITARY_TECH = 0.1;
+    private static final int NAVY_COST_RATIO = 2;
+    private static final double ARMY_GROWTH_RATE = 0.05;
+    private static final int ENEMY_STRENGTH_DIVISOR = 2;
+    private static final double NEUTRAL_TERRAIN_ADVANTAGE = 1.0;
+    private static final double DEFEAT_SURVIVAL_RATIO = 0.7;
+    private static final double COMBAT_RANDOM_FACTOR_MIN = 0.8;
+    private static final double COMBAT_RANDOM_FACTOR_RANGE = 0.4;
+    private static final double CASUALTY_RATE = 0.1;
+    private static final double VICTORY_RATIO_THRESHOLD = 1.5;
+    private static final double DEFEAT_RATIO_THRESHOLD = 0.67;
+    private static final int MAX_RIVAL_CIVILIZATIONS = 10;
 
     // Military technologies that provide advantages
     private static final Set<String> MILITARY_TECHS = Set.of(
@@ -60,11 +71,11 @@ public final class MilitaryModule {
         // Calculate maximum sustainable forces based on wealth
         long maxSoldiers = (long) (wealth / WEALTH_PER_SOLDIER);
         long newArmySize = Math.min(current.armySize(), maxSoldiers);
-        long newNavySize = Math.min(current.navySize(), maxSoldiers / 2); // Navy is more expensive
+        long newNavySize = Math.min(current.navySize(), maxSoldiers / NAVY_COST_RATIO); // Navy is more expensive
 
         // Apply gradual growth if we can afford more
         if (newArmySize < maxSoldiers) {
-            long potentialGrowth = (long) (maxSoldiers * 0.05); // 5% growth per year
+            long potentialGrowth = (long) (maxSoldiers * ARMY_GROWTH_RATE);
             newArmySize = Math.min(maxSoldiers, newArmySize + potentialGrowth);
         }
 
@@ -79,9 +90,9 @@ public final class MilitaryModule {
             // Resolve war
             ConflictResult result = resolveWar(
                 newArmySize,
-                newArmySize / 2, // Simplified: enemy has half our strength
+                newArmySize / ENEMY_STRENGTH_DIVISOR, // Simplified: enemy has half our strength
                 techAdvantage,
-                1.0, // terrain advantage (neutral)
+                NEUTRAL_TERRAIN_ADVANTAGE, // terrain advantage (neutral)
                 random
             );
 
@@ -95,8 +106,8 @@ public final class MilitaryModule {
                 newState = newState.withWar(false, null);
                 // Apply casualties
                 newState = newState
-                    .withArmySize((long) (newState.armySize() * 0.7))
-                    .withNavySize((long) (newState.navySize() * 0.7));
+                    .withArmySize((long) (newState.armySize() * DEFEAT_SURVIVAL_RATIO))
+                    .withNavySize((long) (newState.navySize() * DEFEAT_SURVIVAL_RATIO));
                 events.add(new Event(year, "", EventType.WAR_ENDED, EventSeverity.CRITICAL,
                     "Defeated by " + current.warOpponent() + "!", result));
             }
@@ -104,7 +115,7 @@ public final class MilitaryModule {
         } else {
             // Check for new war
             if (random.nextDouble() < WAR_PROBABILITY) {
-                String opponent = "Rival Civilization " + (random.nextInt(10) + 1);
+                String opponent = "Rival Civilization " + (random.nextInt(MAX_RIVAL_CIVILIZATIONS) + 1);
                 newState = newState.withWar(true, opponent);
                 events.add(new Event(year, "", EventType.WAR_DECLARED, EventSeverity.MAJOR,
                     "War declared against " + opponent + "!", opponent));
@@ -150,18 +161,18 @@ public final class MilitaryModule {
         double defenderEffective = defenderStrength * terrainAdvantage;
 
         // Add randomness (±20%)
-        double randomFactor = 0.8 + (random.nextDouble() * 0.4);
+        double randomFactor = COMBAT_RANDOM_FACTOR_MIN + (random.nextDouble() * COMBAT_RANDOM_FACTOR_RANGE);
         attackerEffective *= randomFactor;
 
         // Calculate casualties
-        double attackerCasualties = defenderEffective * 0.1;
-        double defenderCasualties = attackerEffective * 0.1;
+        double attackerCasualties = defenderEffective * CASUALTY_RATE;
+        double defenderCasualties = attackerEffective * CASUALTY_RATE;
 
         // Determine outcome based on strength ratio
         double ratio = attackerEffective / Math.max(1, defenderEffective);
 
-        boolean victory = ratio > 1.5; // Decisive victory requires 1.5x advantage
-        boolean defeat = ratio < 0.67; // Defeat if less than 0.67x enemy strength
+        boolean victory = ratio > VICTORY_RATIO_THRESHOLD;
+        boolean defeat = ratio < DEFEAT_RATIO_THRESHOLD;
 
         return new ConflictResult(
             victory,

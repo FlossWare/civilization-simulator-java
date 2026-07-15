@@ -28,6 +28,16 @@ public final class PoliticsModule {
     private static final int NEW_RULER_MIN_AGE = 25;
     private static final int NEW_RULER_MAX_AGE = 45;
     private static final double STABILITY_BLEND_RATE = 0.15;
+    private static final double WAR_EXHAUSTION_GAIN_RATE = 0.05;
+    private static final double WAR_EXHAUSTION_DECAY_RATE = 0.1;
+    private static final double REBELLION_VOLATILITY = 0.3;
+    private static final double NORMAL_VOLATILITY = 0.1;
+    private static final double ECONOMIC_HEALTH_WEIGHT = 0.4;
+    private static final double RELIGIOUS_UNITY_WEIGHT = 0.3;
+    private static final double BASE_STABILITY_FLOOR = 0.3;
+    private static final double WAR_EXHAUSTION_STABILITY_PENALTY = 0.1;
+    private static final double REBELLION_RECOVERY_THRESHOLD = 0.5;
+    private static final double RULER_DEATH_AGE_SCALING_FACTOR = 20.0;
 
     /**
      * Ticks politics forward by one time step.
@@ -58,20 +68,20 @@ public final class PoliticsModule {
         // Rates are per-year, scaled by tick duration
         double warExhaustion = current.warExhaustion();
         if (atWar) {
-            warExhaustion = Math.min(1.0, warExhaustion + 0.05 * yearsPerTick);
+            warExhaustion = Math.min(1.0, warExhaustion + WAR_EXHAUSTION_GAIN_RATE * yearsPerTick);
         } else {
-            warExhaustion = Math.max(0.0, warExhaustion - 0.1 * yearsPerTick);
+            warExhaustion = Math.max(0.0, warExhaustion - WAR_EXHAUSTION_DECAY_RATE * yearsPerTick);
         }
 
         // Calculate volatility component (random factor)
-        double volatility = current.inRebellion() ? 0.3 : 0.1;
+        double volatility = current.inRebellion() ? REBELLION_VOLATILITY : NORMAL_VOLATILITY;
 
         // Calculate target stability from current conditions (mean-reverting)
-        double targetStability = economicHealth * 0.4 + religiousUnity * 0.3 + 0.3;
+        double targetStability = economicHealth * ECONOMIC_HEALTH_WEIGHT + religiousUnity * RELIGIOUS_UNITY_WEIGHT + BASE_STABILITY_FLOOR;
         // Blend toward target (mean-reverting)
         double newStability = baseStability + (targetStability - baseStability) * STABILITY_BLEND_RATE;
         // Apply penalties
-        newStability -= warExhaustion * 0.1;
+        newStability -= warExhaustion * WAR_EXHAUSTION_STABILITY_PENALTY;
         newStability -= random.nextDouble() * volatility;
         // Clamp stability to [0, 1]
         newStability = Math.max(0.0, Math.min(1.0, newStability));
@@ -87,7 +97,7 @@ public final class PoliticsModule {
                 events.add(new Event(year, "", EventType.REBELLION, EventSeverity.CRITICAL,
                     "Popular rebellion breaks out due to low stability!", newStability));
             }
-        } else if (rebellion && newStability > 0.5) {
+        } else if (rebellion && newStability > REBELLION_RECOVERY_THRESHOLD) {
             // Rebellion ends if stability recovers
             rebellion = false;
         }
@@ -97,7 +107,7 @@ public final class PoliticsModule {
         boolean rulerDied = false;
         if (newRulerAge > RULER_DEATH_AGE_THRESHOLD) {
             double deathProbability = RULER_DEATH_BASE_PROBABILITY
-                * (newRulerAge - RULER_DEATH_AGE_THRESHOLD) / 20.0;
+                * (newRulerAge - RULER_DEATH_AGE_THRESHOLD) / RULER_DEATH_AGE_SCALING_FACTOR;
             deathProbability = Math.min(RULER_DEATH_MAX_PROBABILITY, deathProbability);
             if (random.nextDouble() < deathProbability) {
                 rulerDied = true;

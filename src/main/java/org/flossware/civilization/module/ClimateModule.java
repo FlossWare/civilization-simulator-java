@@ -20,6 +20,27 @@ public final class ClimateModule {
     private static final double STORM_FREQUENCY_THRESHOLD = 2.8;  // Out of 0-5 range
     private static final double DROUGHT_INDEX_THRESHOLD = 0.97;   // Very severe drought only
 
+    // Random walk scaling factors
+    private static final double TEMPERATURE_VOLATILITY_SCALE = 2.0;
+    private static final double STORM_VOLATILITY_SCALE = 0.5;
+
+    // Climate value ranges
+    private static final double MIN_TEMPERATURE_ANOMALY = -10.0;
+    private static final double MAX_TEMPERATURE_ANOMALY = 10.0;
+    private static final double MIN_DROUGHT_INDEX = 0.0;
+    private static final double MAX_DROUGHT_INDEX = 1.0;
+    private static final double MIN_STORM_FREQUENCY = 0.0;
+    private static final double MAX_STORM_FREQUENCY = 5.0;
+
+    // Sea level rise coefficient per degree of temperature anomaly
+    private static final double SEA_LEVEL_RISE_COEFFICIENT = 0.5;
+
+    // Severity determination thresholds
+    private static final double EXTREME_STORM_THRESHOLD = 3.5;
+    private static final double EXTREME_DROUGHT_THRESHOLD = 0.985;
+    private static final double MAJOR_STORM_THRESHOLD = 3.2;
+    private static final double MAJOR_DROUGHT_THRESHOLD = 0.98;
+
     private ClimateModule() {
         // Utility class
     }
@@ -39,22 +60,22 @@ public final class ClimateModule {
 
         // Random walk on each dimension
         double newTemperatureAnomaly = current.temperatureAnomaly()
-            + (random.nextDouble() - 0.5) * 2 * volatility;
+            + (random.nextDouble() - 0.5) * TEMPERATURE_VOLATILITY_SCALE * volatility;
 
         double newDroughtIndex = current.droughtIndex()
             + (random.nextDouble() - 0.5) * volatility;
 
         double newStormFrequency = current.stormFrequency()
-            + (random.nextDouble() - 0.5) * volatility * 0.5;
+            + (random.nextDouble() - 0.5) * volatility * STORM_VOLATILITY_SCALE;
 
         // Clamp values to valid ranges BEFORE using them in calculations
-        newTemperatureAnomaly = clamp(newTemperatureAnomaly, -10.0, 10.0);
-        newDroughtIndex = clamp(newDroughtIndex, 0.0, 1.0);
-        newStormFrequency = clamp(newStormFrequency, 0.0, 5.0);  // Max 5 major storms/year
+        newTemperatureAnomaly = clamp(newTemperatureAnomaly, MIN_TEMPERATURE_ANOMALY, MAX_TEMPERATURE_ANOMALY);
+        newDroughtIndex = clamp(newDroughtIndex, MIN_DROUGHT_INDEX, MAX_DROUGHT_INDEX);
+        newStormFrequency = clamp(newStormFrequency, MIN_STORM_FREQUENCY, MAX_STORM_FREQUENCY);
 
         // Sea level rise based on CLAMPED temperature anomaly
         double newSeaLevelRise = current.seaLevelRise_mm()
-            + Math.max(0, newTemperatureAnomaly * 0.5);
+            + Math.max(0, newTemperatureAnomaly * SEA_LEVEL_RISE_COEFFICIENT);
         newSeaLevelRise = Math.max(0.0, newSeaLevelRise);
 
         // Create new state
@@ -114,14 +135,14 @@ public final class ClimateModule {
      * Determine event severity based on climate conditions.
      */
     private static EventSeverity determineSeverity(double stormFrequency, double droughtIndex) {
-        boolean extremeStorms = stormFrequency > 3.5;
-        boolean extremeDrought = droughtIndex > 0.985;
+        boolean extremeStorms = stormFrequency > EXTREME_STORM_THRESHOLD;
+        boolean extremeDrought = droughtIndex > EXTREME_DROUGHT_THRESHOLD;
 
         if (extremeStorms && extremeDrought) {
             return EventSeverity.CRITICAL;
         } else if (stormFrequency > STORM_FREQUENCY_THRESHOLD && droughtIndex > DROUGHT_INDEX_THRESHOLD) {
             return EventSeverity.CRITICAL;
-        } else if (stormFrequency > 3.2 || droughtIndex > 0.98) {
+        } else if (stormFrequency > MAJOR_STORM_THRESHOLD || droughtIndex > MAJOR_DROUGHT_THRESHOLD) {
             return EventSeverity.MAJOR;
         } else {
             return EventSeverity.MAJOR;
