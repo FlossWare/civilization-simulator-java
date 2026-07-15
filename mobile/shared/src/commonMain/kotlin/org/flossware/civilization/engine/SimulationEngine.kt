@@ -138,6 +138,16 @@ class SimulationEngine(
         state = state.withMilitary(milResult.state)
         events.addAll(milResult.events)
 
+        // 9. Random Event Module
+        val randomRandom = SeedManager.getModuleRandom(yearRandom, "random_event")
+        val randomResult = RandomEventModule.tick(
+            state,
+            scenario.worldConstraints.randomEventFrequency,
+            randomRandom
+        )
+        state = randomResult.state
+        events.addAll(randomResult.events)
+
         // Update year
         state = state.withYear(year)
 
