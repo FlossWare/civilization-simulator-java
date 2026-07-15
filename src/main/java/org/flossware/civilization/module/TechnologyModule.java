@@ -1,8 +1,10 @@
 package org.flossware.civilization.module;
 
+import org.flossware.civilization.engine.TickContext;
 import org.flossware.civilization.model.*;
 import org.flossware.civilization.model.Event.EventSeverity;
 import org.flossware.civilization.model.Event.EventType;
+import org.flossware.civilization.util.SeedManager;
 
 import java.util.*;
 
@@ -10,12 +12,49 @@ import java.util.*;
  * Technology research and diffusion module.
  * Pure function with explicit DAG-based unlocking.
  */
-public final class TechnologyModule {
+public final class TechnologyModule implements SimulationModule {
 
     private static final double BASE_RESEARCH_POINTS = 10.0;
     private static final double UNIVERSITY_BONUS = 0.5;
     private static final double MAX_POPULATION_FACTOR = 1.0;
     private static final double POPULATION_SCALING_DIVISOR = 1_000_000.0;
+    private static final double TRADE_CONNECTIVITY_SCALE = 0.2;
+
+    private final TechGraph techGraph;
+
+    /**
+     * Creates a TechnologyModule with the given tech graph for DAG-based unlocking.
+     *
+     * @param techGraph the technology dependency graph
+     */
+    public TechnologyModule(TechGraph techGraph) {
+        this.techGraph = Objects.requireNonNull(techGraph);
+    }
+
+    @Override
+    public String moduleName() {
+        return "technology";
+    }
+
+    @Override
+    public ModuleResult<?> tick(TickContext context) {
+        var random = SeedManager.getModuleRandom(context.yearSeed(), moduleName());
+        double tradeConnectivity = Math.min(1.0,
+            context.state().economy().tradeRoutes().size() * TRADE_CONNECTIVITY_SCALE);
+        return tick(
+            context.state().technology(),
+            techGraph,
+            tradeConnectivity,
+            context.state().population().population(),
+            random
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CivilizationState applyResult(CivilizationState state, ModuleResult<?> result) {
+        return state.withTechnology(((ModuleResult<TechnologyState>) result).state());
+    }
 
     public static ModuleResult<TechnologyState> tick(
         TechnologyState current,

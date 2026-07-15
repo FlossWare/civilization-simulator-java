@@ -1,9 +1,12 @@
 package org.flossware.civilization.module;
 
+import org.flossware.civilization.engine.TickContext;
+import org.flossware.civilization.model.CivilizationState;
 import org.flossware.civilization.model.ClimateState;
 import org.flossware.civilization.model.Event;
 import org.flossware.civilization.model.Event.EventType;
 import org.flossware.civilization.model.Event.EventSeverity;
+import org.flossware.civilization.util.SeedManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -13,7 +16,7 @@ import java.util.SplittableRandom;
  * Climate simulation module using random walk dynamics.
  * Implements tick function to evolve climate state over time.
  */
-public final class ClimateModule {
+public final class ClimateModule implements SimulationModule {
 
     // Disaster threshold constants - calibrated for realistic frequencies
     // Thresholds set to trigger ~2-3% of years (roughly 1 disaster per 30-50 years)
@@ -41,8 +44,25 @@ public final class ClimateModule {
     private static final double MAJOR_STORM_THRESHOLD = 3.2;
     private static final double MAJOR_DROUGHT_THRESHOLD = 0.98;
 
-    private ClimateModule() {
-        // Utility class
+    @Override
+    public String moduleName() {
+        return "climate";
+    }
+
+    @Override
+    public ModuleResult<?> tick(TickContext context) {
+        var random = SeedManager.getModuleRandom(context.yearSeed(), moduleName());
+        return tick(
+            context.state().climate(),
+            context.scenario().worldConstraints().climateVolatility(),
+            random
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CivilizationState applyResult(CivilizationState state, ModuleResult<?> result) {
+        return state.withClimate(((ModuleResult<ClimateState>) result).state());
     }
 
     /**

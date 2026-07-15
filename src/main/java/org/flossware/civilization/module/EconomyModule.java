@@ -1,9 +1,12 @@
 package org.flossware.civilization.module;
 
+import org.flossware.civilization.engine.TickContext;
+import org.flossware.civilization.model.CivilizationState;
 import org.flossware.civilization.model.EconomyState;
 import org.flossware.civilization.model.Event;
 import org.flossware.civilization.model.Event.EventSeverity;
 import org.flossware.civilization.model.Event.EventType;
+import org.flossware.civilization.util.SeedManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +18,7 @@ import java.util.SplittableRandom;
  *
  * Pure function: (state, params, random) → (newState, events)
  */
-public final class EconomyModule {
+public final class EconomyModule implements SimulationModule {
 
     private static final double BASE_PRODUCTIVITY = 1.0;
     private static final double PER_CAPITA_CONSUMPTION = 0.15;  // Reduced from 0.8 to create surplus (target: 0.2 per capita)
@@ -37,6 +40,29 @@ public final class EconomyModule {
     private static final double MACHINERY_BONUS = 1.2;
     private static final double STEAM_ENGINE_BONUS = 1.4;
     private static final double INDUSTRIALIZATION_BONUS = 1.5;
+
+    @Override
+    public String moduleName() {
+        return "economy";
+    }
+
+    @Override
+    public ModuleResult<?> tick(TickContext context) {
+        var random = SeedManager.getModuleRandom(context.yearSeed(), moduleName());
+        return tick(
+            context.state().economy(),
+            context.state().climate().getResourceAbundance(),
+            context.state().technology().unlockedTechs(),
+            context.state().population().population(),
+            random
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CivilizationState applyResult(CivilizationState state, ModuleResult<?> result) {
+        return state.withEconomy(((ModuleResult<EconomyState>) result).state());
+    }
 
     /**
      * Ticks economy forward by one time step.

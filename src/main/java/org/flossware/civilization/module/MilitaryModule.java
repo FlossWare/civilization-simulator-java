@@ -1,9 +1,12 @@
 package org.flossware.civilization.module;
 
+import org.flossware.civilization.engine.TickContext;
+import org.flossware.civilization.model.CivilizationState;
 import org.flossware.civilization.model.MilitaryState;
 import org.flossware.civilization.model.Event;
 import org.flossware.civilization.model.Event.EventSeverity;
 import org.flossware.civilization.model.Event.EventType;
+import org.flossware.civilization.util.SeedManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -15,7 +18,7 @@ import java.util.SplittableRandom;
  *
  * Pure function: (state, params, random) → (newState, events)
  */
-public final class MilitaryModule {
+public final class MilitaryModule implements SimulationModule {
 
     private static final double WEALTH_PER_SOLDIER = 1000.0;
     private static final double WAR_PROBABILITY = 0.05; // 5% per year
@@ -32,6 +35,28 @@ public final class MilitaryModule {
     private static final double VICTORY_RATIO_THRESHOLD = 1.5;
     private static final double DEFEAT_RATIO_THRESHOLD = 0.67;
     private static final int MAX_RIVAL_CIVILIZATIONS = 10;
+
+    @Override
+    public String moduleName() {
+        return "military";
+    }
+
+    @Override
+    public ModuleResult<?> tick(TickContext context) {
+        var random = SeedManager.getModuleRandom(context.yearSeed(), moduleName());
+        return tick(
+            context.state().military(),
+            context.state().economy().wealth(),
+            context.state().technology().unlockedTechs(),
+            random
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CivilizationState applyResult(CivilizationState state, ModuleResult<?> result) {
+        return state.withMilitary(((ModuleResult<MilitaryState>) result).state());
+    }
 
     // Military technologies that provide advantages
     private static final Set<String> MILITARY_TECHS = Set.of(

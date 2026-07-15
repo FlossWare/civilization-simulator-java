@@ -1,9 +1,12 @@
 package org.flossware.civilization.module;
 
+import org.flossware.civilization.engine.TickContext;
+import org.flossware.civilization.model.CivilizationState;
 import org.flossware.civilization.model.PopulationState;
 import org.flossware.civilization.model.Event;
 import org.flossware.civilization.model.Event.EventSeverity;
 import org.flossware.civilization.model.Event.EventType;
+import org.flossware.civilization.util.SeedManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +17,7 @@ import java.util.SplittableRandom;
  *
  * Pure function: (state, params, random) → (newState, events)
  */
-public final class PopulationModule {
+public final class PopulationModule implements SimulationModule {
 
     private static final double BASE_BIRTH_RATE = 0.03;
     private static final double BASE_DEATH_RATE = 0.02;
@@ -24,6 +27,28 @@ public final class PopulationModule {
     private static final long POPULATION_MILESTONE_THRESHOLD = 10_000_000;
     private static final double BASE_CARRYING_CAPACITY = 50_000_000;
     private static final double MIN_RESOURCE_ABUNDANCE = 0.1;
+
+    @Override
+    public String moduleName() {
+        return "population";
+    }
+
+    @Override
+    public ModuleResult<?> tick(TickContext context) {
+        var random = SeedManager.getModuleRandom(context.yearSeed(), moduleName());
+        return tick(
+            context.state().population(),
+            context.state().climate().getResourceAbundance(),
+            context.scenario().worldConstraints().plagueProbability(),
+            random
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CivilizationState applyResult(CivilizationState state, ModuleResult<?> result) {
+        return state.withPopulation(((ModuleResult<PopulationState>) result).state());
+    }
 
     /**
      * Ticks population forward by one time step.

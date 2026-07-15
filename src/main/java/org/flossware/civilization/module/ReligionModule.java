@@ -1,9 +1,12 @@
 package org.flossware.civilization.module;
 
+import org.flossware.civilization.engine.TickContext;
+import org.flossware.civilization.model.CivilizationState;
 import org.flossware.civilization.model.ReligionState;
 import org.flossware.civilization.model.Event;
 import org.flossware.civilization.model.Event.EventSeverity;
 import org.flossware.civilization.model.Event.EventType;
+import org.flossware.civilization.util.SeedManager;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -16,7 +19,7 @@ import java.util.SplittableRandom;
  *
  * Pure function: (state, tradeConnectivity, random) → (newState, events)
  */
-public final class ReligionModule {
+public final class ReligionModule implements SimulationModule {
 
     private static final double SCHISM_THRESHOLD = 0.05;
     private static final double MINORITY_THRESHOLD = 0.2;
@@ -25,6 +28,30 @@ public final class ReligionModule {
     private static final double TRADE_SPREAD_MODIFIER = 0.5;
     private static final double BASE_SPLIT_RATIO = 0.6;
     private static final double SPLIT_RATIO_RANDOMNESS = 0.2;
+    private static final double TRADE_CONNECTIVITY_SCALE = 0.2;
+
+    @Override
+    public String moduleName() {
+        return "religion";
+    }
+
+    @Override
+    public ModuleResult<?> tick(TickContext context) {
+        var random = SeedManager.getModuleRandom(context.yearSeed(), moduleName());
+        double tradeConnectivity = Math.min(1.0,
+            context.state().economy().tradeRoutes().size() * TRADE_CONNECTIVITY_SCALE);
+        return tick(
+            context.state().religion(),
+            tradeConnectivity,
+            random
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CivilizationState applyResult(CivilizationState state, ModuleResult<?> result) {
+        return state.withReligion(((ModuleResult<ReligionState>) result).state());
+    }
 
     /**
      * Ticks religion forward by one time step.

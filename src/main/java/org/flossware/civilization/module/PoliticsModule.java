@@ -1,9 +1,12 @@
 package org.flossware.civilization.module;
 
+import org.flossware.civilization.engine.TickContext;
+import org.flossware.civilization.model.CivilizationState;
 import org.flossware.civilization.model.PoliticsState;
 import org.flossware.civilization.model.Event;
 import org.flossware.civilization.model.Event.EventSeverity;
 import org.flossware.civilization.model.Event.EventType;
+import org.flossware.civilization.util.SeedManager;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -14,7 +17,7 @@ import java.util.SplittableRandom;
  *
  * Pure function: (state, params, random) → (newState, events)
  */
-public final class PoliticsModule {
+public final class PoliticsModule implements SimulationModule {
 
     private static final double REBELLION_THRESHOLD = 0.2;
     private static final double REBELLION_PROBABILITY = 0.3;
@@ -38,6 +41,34 @@ public final class PoliticsModule {
     private static final double WAR_EXHAUSTION_STABILITY_PENALTY = 0.1;
     private static final double REBELLION_RECOVERY_THRESHOLD = 0.5;
     private static final double RULER_DEATH_AGE_SCALING_FACTOR = 20.0;
+    private static final double ECONOMIC_HEALTH_PER_CAPITA_DIVISOR = 1000.0;
+
+    @Override
+    public String moduleName() {
+        return "politics";
+    }
+
+    @Override
+    public ModuleResult<?> tick(TickContext context) {
+        var random = SeedManager.getModuleRandom(context.yearSeed(), moduleName());
+        double wealthPerCapita = context.state().economy().wealth()
+            / Math.max(1, context.state().population().population());
+        double economicHealth = Math.min(1.0, wealthPerCapita / ECONOMIC_HEALTH_PER_CAPITA_DIVISOR);
+        return tick(
+            context.state().politics(),
+            economicHealth,
+            context.state().religion().religiousUnity(),
+            context.state().military().atWar(),
+            context.tickType().getYears(),
+            random
+        );
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public CivilizationState applyResult(CivilizationState state, ModuleResult<?> result) {
+        return state.withPolitics(((ModuleResult<PoliticsState>) result).state());
+    }
 
     /**
      * Ticks politics forward by one time step.
