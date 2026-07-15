@@ -15,7 +15,8 @@ data class CivilizationState(
     val politics: PoliticsState,
     val military: MilitaryState,
     val climate: ClimateState,
-    val religion: ReligionState
+    val religion: ReligionState,
+    val randomEvent: RandomEventState
 ) {
     fun withYear(newYear: Int) = copy(year = newYear)
     fun withPopulation(newPopulation: PopulationState) = copy(population = newPopulation)
@@ -25,4 +26,5 @@ data class CivilizationState(
     fun withMilitary(newMilitary: MilitaryState) = copy(military = newMilitary)
     fun withClimate(newClimate: ClimateState) = copy(climate = newClimate)
     fun withReligion(newReligion: ReligionState) = copy(religion = newReligion)
+    fun withRandomEvent(newRandomEvent: RandomEventState) = copy(randomEvent = newRandomEvent)
 }

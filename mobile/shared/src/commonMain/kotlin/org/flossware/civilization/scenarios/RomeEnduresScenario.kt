@@ -34,7 +34,8 @@ object RomeEnduresScenario {
 
         return CivilizationState("rome", "Roman Empire",
             listOf("Italy", "Gaul", "Hispania", "Britannia", "Greece", "Egypt"),
-            "Rome", -27, population, economy, technology, politics, military, climate, religion)
+            "Rome", -27, population, economy, technology, politics, military, climate, religion,
+            RandomEventState(Int.MIN_VALUE))
     }
 
     private fun createTechTree(): List<Technology> = listOf(
@@ -60,7 +61,7 @@ object RomeEnduresScenario {
         Technology("internet", "modern", listOf("computing", "radio"), 550.0, 0.02)
     )
 
-    private fun createWorldConstraints() = WorldConstraints(0.6, 0.45, 0.25, 0.015, 0.65)
+    private fun createWorldConstraints() = WorldConstraints(0.6, 0.45, 0.25, 0.015, 0.65, 1.0)
 
     private fun createSimulationRules() = SimulationRules("adaptive", true, 12345L, 50, 8)
 }

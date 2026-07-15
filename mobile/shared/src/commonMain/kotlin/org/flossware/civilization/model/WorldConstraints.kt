@@ -8,7 +8,8 @@ data class WorldConstraints(
     val warFrequency: Double,
     val climateVolatility: Double,
     val plagueProbability: Double,
-    val resourceAbundance: Double
+    val resourceAbundance: Double,
+    val randomEventFrequency: Double
 ) {
     init {
         require(politicalStability in 0.0..1.0) { "politicalStability must be in [0, 1]" }
@@ -16,5 +17,6 @@ data class WorldConstraints(
         require(climateVolatility in 0.0..1.0) { "climateVolatility must be in [0, 1]" }
         require(plagueProbability in 0.0..1.0) { "plagueProbability must be in [0, 1]" }
         require(resourceAbundance in 0.0..1.0) { "resourceAbundance must be in [0, 1]" }
+        require(randomEventFrequency in 0.0..2.0) { "randomEventFrequency must be in [0, 2]" }
     }
 }
